@@ -32,7 +32,7 @@ export function App() {
       <div className="flex flex-col h-full bg-slate-50">
         <div className="flex-1 flex items-center justify-center text-slate-500">
           <div className="text-center">
-            <div className="inline-block w-4 h-4 border-2 border-slate-200 border-t-emerald-500 rounded-full animate-spin mb-2"></div>
+            <div className="inline-block w-4 h-4 border-2 border-slate-200 border-t-blue-500 rounded-full animate-spin mb-2"></div>
             <p>Loading...</p>
           </div>
         </div>
@@ -62,7 +62,7 @@ export function App() {
             key={tab}
             className={`flex-1 py-3 px-4 text-sm font-medium transition-all ${
               activeTab === tab
-                ? 'text-emerald-500 border-b-2 border-emerald-500 -mb-px'
+                ? 'text-blue-500 border-b-2 border-blue-500 -mb-px'
                 : 'text-slate-400 hover:bg-slate-50'
             }`}
             onClick={() => setActiveTab(tab)}

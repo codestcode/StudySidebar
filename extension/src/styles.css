@@ -2,15 +2,10 @@
 @tailwind components;
 @tailwind utilities;
 
-/* ============================================
-   StudySidebar - Modern Educational UI 2026
-   Global Styles + Design System
-   ============================================ */
-
 :root {
-  --primary: 16 185 129;
-  --primary-dark: 5 150 105;
-  --accent: 59 130 246;
+  --primary: 59 130 246;
+  --primary-dark: 37 99 235;
+  --accent: 16 185 129;
   --accent-purple: 124 58 237;
   --success: 16 185 129;
   --warning: 245 158 11;
@@ -33,7 +28,7 @@
 
 @layer base {
   body {
-    font-family: 'Inter', system-ui, sans-serif;
+    font-family: 'Poppins', system-ui, sans-serif;
     background-color: rgb(var(--background));
     color: rgb(var(--foreground));
   }
@@ -58,21 +53,12 @@
   .input {
     @apply w-full px-5 py-4 bg-[rgb(var(--card))] border border-[rgb(var(--border))]
            rounded-2xl focus:outline-none focus:border-[rgb(var(--primary))]
-           focus:ring-4 focus:ring-[rgb(var(--primary)/0.15)] transition-all;
+           focus:ring-[5px] focus:ring-[rgb(var(--primary)/0.2)] transition-all duration-200;
   }
 
   .card {
     @apply bg-[rgb(var(--card))] rounded-3xl border border-[rgb(var(--border))]
            shadow-sm hover:shadow-xl transition-all duration-300;
-  }
-
-  .auth-container {
-    @apply max-w-md mx-auto card p-10 shadow-2xl;
-  }
-
-  .logo {
-    @apply w-16 h-16 bg-gradient-to-br from-[rgb(var(--primary))] to-[rgb(var(--accent))]
-           rounded-2xl flex items-center justify-center text-white font-bold text-3xl;
   }
 
   .code-input {
@@ -83,4 +69,19 @@
 
 @layer utilities {
   .text-balance { text-wrap: balance; }
+}
+
+@keyframes fadeSlideUp {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-slide-up {
+  animation: fadeSlideUp 0.4s ease-out;
 }

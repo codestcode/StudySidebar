@@ -80,7 +80,7 @@ export function Chat() {
               key={i}
               className={`p-3 rounded-2xl text-sm ${
                 msg.role === 'user'
-                  ? 'bg-emerald-100 text-emerald-700 ml-5 text-right'
+                  ? 'bg-blue-100 text-blue-700 ml-5 text-right'
                   : 'bg-white text-slate-800 mr-5'
               }`}
             >
@@ -90,7 +90,7 @@ export function Chat() {
         )}
         {loading && (
           <div className="p-3 rounded-2xl bg-white mr-5">
-            <span className="w-4 h-4 border-2 border-slate-200 border-t-emerald-500 rounded-full animate-spin inline-block"></span>
+            <span className="w-4 h-4 border-2 border-slate-200 border-t-blue-500 rounded-full animate-spin inline-block"></span>
           </div>
         )}
         <div ref={messagesEndRef} />

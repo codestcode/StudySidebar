@@ -1,113 +1,134 @@
 import React, { useState } from 'react';
 import { api } from '../utils/api';
 import { storage } from '../utils/storage';
+import { LoginForm } from './LoginForm';
+import { RegisterForm } from './RegisterForm';
+import { ForgotPasswordForm } from './ForgotPasswordForm';
 import '../styles.css';
 
 interface AuthProps {
   onAuthSuccess: () => void;
 }
 
+type Page = 'login' | 'register' | 'forgot';
+
 export function Auth({ onAuthSuccess }: AuthProps) {
-  const [mode, setMode] = useState<'login' | 'register'>('login');
+  const [page, setPage] = useState<Page>('login');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [rememberMe, setRememberMe] = useState(false);
+  const [resetSent, setResetSent] = useState(false);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
     setLoading(true);
-
     try {
-      const result =
-        mode === 'login'
-          ? await api.login(email, password)
-          : await api.register(email, password);
-
+      const result = await api.login(email, password);
       await storage.setToken(result.token, result.userId, email);
       onAuthSuccess();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Auth failed');
+      setError(err instanceof Error ? err.message : 'Login failed');
     } finally {
       setLoading(false);
     }
   };
 
+  const handleRegister = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError('');
+    if (password !== confirmPassword) {
+      setError('Passwords do not match');
+      return;
+    }
+    setLoading(true);
+    try {
+      const result = await api.register(email, password);
+      await storage.setToken(result.token, result.userId, email);
+      onAuthSuccess();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Registration failed');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleForgotPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError('');
+    setLoading(true);
+    try {
+      await new Promise((r) => setTimeout(r, 1000));
+      setResetSent(true);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Something went wrong');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const navigate = (to: Page) => {
+    setPage(to);
+    setError('');
+    setResetSent(false);
+  };
+
   return (
-    <div className="flex flex-col h-full bg-slate-50">
-      <header className="px-4 py-4 border-b border-slate-200 bg-white">
-        <h1 className="text-lg font-semibold text-slate-900">StudySidebar</h1>
-      </header>
-      <div className="flex-1 overflow-y-auto p-4">
-        <div className="auth-container">
-          <div className="flex justify-center mb-6">
-            <div className="logo">S</div>
-          </div>
+    <div className="flex flex-col h-full bg-gradient-to-br from-slate-50 to-slate-100">
+      <div className="flex-1 overflow-y-auto">
+        <div className="flex items-center justify-center min-h-full p-5">
 
-          <h2 className="text-xl font-semibold text-center mb-6 text-slate-900">
-            {mode === 'login' ? 'Welcome Back' : 'Create Account'}
-          </h2>
-
-          {error && (
-            <div className="mb-3 p-3 rounded-2xl bg-red-50 text-red-500 text-sm">
-              {error}
-            </div>
+          {page === 'login' && (
+            <LoginForm
+              email={email}
+              password={password}
+              loading={loading}
+              error={error}
+              showPassword={showPassword}
+              rememberMe={rememberMe}
+              onEmailChange={setEmail}
+              onPasswordChange={setPassword}
+              onShowPasswordChange={() => setShowPassword(!showPassword)}
+              onRememberMeChange={setRememberMe}
+              onSubmit={handleLogin}
+              onNavigateRegister={() => navigate('register')}
+              onNavigateForgot={() => navigate('forgot')}
+            />
           )}
 
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium mb-1.5">Email</label>
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-                disabled={loading}
-                className="input"
-                placeholder="you@example.com"
-              />
-            </div>
+          {page === 'register' && (
+            <RegisterForm
+              email={email}
+              password={password}
+              confirmPassword={confirmPassword}
+              loading={loading}
+              error={error}
+              showPassword={showPassword}
+              onEmailChange={setEmail}
+              onPasswordChange={setPassword}
+              onConfirmPasswordChange={setConfirmPassword}
+              onShowPasswordChange={() => setShowPassword(!showPassword)}
+              onSubmit={handleRegister}
+              onNavigateLogin={() => navigate('login')}
+            />
+          )}
 
-            <div>
-              <label className="block text-sm font-medium mb-1.5">Password</label>
-              <input
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                disabled={loading}
-                className="input"
-                placeholder="••••••••"
-              />
-            </div>
+          {page === 'forgot' && (
+            <ForgotPasswordForm
+              email={email}
+              loading={loading}
+              error={error}
+              resetSent={resetSent}
+              onEmailChange={setEmail}
+              onSubmit={handleForgotPassword}
+              onNavigateLogin={() => navigate('login')}
+            />
+          )}
 
-            <button
-              type="submit"
-              className="btn btn-primary w-full"
-              disabled={loading}
-            >
-              {loading ? (
-                <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
-              ) : mode === 'login' ? (
-                'Login'
-              ) : (
-                'Register'
-              )}
-            </button>
-
-            <button
-              type="button"
-              className="btn w-full border border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
-              onClick={() => {
-                setMode(mode === 'login' ? 'register' : 'login');
-                setError('');
-              }}
-              disabled={loading}
-            >
-              {mode === 'login' ? "Need an account? Register" : "Already have an account? Login"}
-            </button>
-          </form>
         </div>
       </div>
     </div>

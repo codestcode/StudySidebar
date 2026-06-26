@@ -120,7 +120,7 @@ export function Summary() {
         <div className="flex-1 overflow-y-auto bg-slate-100 rounded-2xl p-3">
           {loading && !summary ? (
             <div className="text-center text-slate-400">
-              <div className="inline-block w-4 h-4 border-2 border-slate-200 border-t-emerald-500 rounded-full animate-spin mb-2"></div>
+              <div className="inline-block w-4 h-4 border-2 border-slate-200 border-t-blue-500 rounded-full animate-spin mb-2"></div>
               <p>Generating summary...</p>
             </div>
           ) : (
@@ -137,7 +137,7 @@ export function Summary() {
           type="button"
           className={`btn w-full ${
             saved
-              ? 'bg-emerald-100 text-emerald-600 cursor-default'
+              ? 'bg-blue-100 text-blue-600 cursor-default'
               : 'btn-primary'
           }`}
           onClick={() => setSaved(true)}

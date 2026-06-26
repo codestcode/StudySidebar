@@ -6,13 +6,16 @@ export default {
     extend: {
       colors: {
         primary: {
-          DEFAULT: '#10B981',
-          dark: '#059669',
+          DEFAULT: '#3B82F6',
+          dark: '#2563EB',
         },
         accent: {
-          DEFAULT: '#3B82F6',
+          DEFAULT: '#10B981',
           purple: '#7C3AED',
         },
+      },
+      fontFamily: {
+        poppins: ['Poppins', 'system-ui', 'sans-serif'],
       },
       borderRadius: {
         '2xl': '1rem',

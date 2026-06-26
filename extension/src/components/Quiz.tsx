@@ -161,7 +161,7 @@ export function Quiz() {
                 {q.options?.map((option, j) => (
                   <label
                     key={j}
-                    className="flex items-center gap-2 cursor-pointer text-sm hover:text-emerald-600 transition-colors"
+                    className="flex items-center gap-2 cursor-pointer text-sm hover:text-blue-600 transition-colors"
                   >
                     <input
                       type="radio"
@@ -172,7 +172,7 @@ export function Quiz() {
                         setAnswers((prev) => ({ ...prev, [i]: e.target.value }))
                       }
                       disabled={loading}
-                      className="accent-emerald-500"
+                      className="accent-blue-500"
                     />
                     <span>{option}</span>
                   </label>
@@ -210,7 +210,7 @@ export function Quiz() {
   if (mode === 'result' && result) {
     return (
       <div className="text-center">
-        <h2 className="text-3xl font-semibold mb-4 text-emerald-500">
+        <h2 className="text-3xl font-semibold mb-4 text-blue-500">
           {result.score.toFixed(0)}%
         </h2>
         <p className="text-base mb-2 text-slate-700">
