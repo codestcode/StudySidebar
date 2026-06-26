@@ -1,0 +1,15 @@
+{
+  "name": "studysidebar",
+  "version": "1.0.0",
+  "description": "AI-powered study assistant Chrome extension for CS students",
+  "private": true,
+  "scripts": {
+    "dev": "concurrently \"pnpm --filter ./backend dev\" \"pnpm --filter ./extension dev\"",
+    "build": "pnpm --filter ./backend build && pnpm --filter ./extension build",
+    "dev:backend": "pnpm --filter ./backend dev",
+    "dev:extension": "pnpm --filter ./extension dev"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  }
+}

@@ -1,0 +1,86 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ============================================
+   StudySidebar - Modern Educational UI 2026
+   Global Styles + Design System
+   ============================================ */
+
+:root {
+  --primary: 16 185 129;
+  --primary-dark: 5 150 105;
+  --accent: 59 130 246;
+  --accent-purple: 124 58 237;
+  --success: 16 185 129;
+  --warning: 245 158 11;
+  --danger: 239 68 68;
+
+  --background: 248 250 252;
+  --card: 255 255 255;
+  --foreground: 15 23 42;
+  --muted: 100 116 139;
+  --border: 226 232 240;
+}
+
+.dark {
+  --background: 15 23 42;
+  --card: 30 41 59;
+  --foreground: 248 250 252;
+  --muted: 148 163 184;
+  --border: 51 65 85;
+}
+
+@layer base {
+  body {
+    font-family: 'Inter', system-ui, sans-serif;
+    background-color: rgb(var(--background));
+    color: rgb(var(--foreground));
+  }
+}
+
+@layer components {
+  .btn {
+    @apply px-6 py-3.5 rounded-2xl font-semibold transition-all duration-200
+           active:scale-[0.97] flex items-center justify-center gap-2 text-base;
+  }
+
+  .btn-primary {
+    @apply bg-[rgb(var(--primary))] hover:bg-[rgb(var(--primary-dark))]
+           text-white shadow-lg shadow-[rgb(var(--primary)/0.3)];
+  }
+
+  .btn-gradient {
+    @apply bg-gradient-to-r from-[rgb(var(--primary))] to-[rgb(var(--accent))]
+           text-white shadow-lg hover:shadow-xl;
+  }
+
+  .input {
+    @apply w-full px-5 py-4 bg-[rgb(var(--card))] border border-[rgb(var(--border))]
+           rounded-2xl focus:outline-none focus:border-[rgb(var(--primary))]
+           focus:ring-4 focus:ring-[rgb(var(--primary)/0.15)] transition-all;
+  }
+
+  .card {
+    @apply bg-[rgb(var(--card))] rounded-3xl border border-[rgb(var(--border))]
+           shadow-sm hover:shadow-xl transition-all duration-300;
+  }
+
+  .auth-container {
+    @apply max-w-md mx-auto card p-10 shadow-2xl;
+  }
+
+  .logo {
+    @apply w-16 h-16 bg-gradient-to-br from-[rgb(var(--primary))] to-[rgb(var(--accent))]
+           rounded-2xl flex items-center justify-center text-white font-bold text-3xl;
+  }
+
+  .code-input {
+    @apply w-14 h-16 text-center text-3xl font-semibold bg-[rgb(var(--card))]
+           border border-[rgb(var(--border))] rounded-2xl focus:border-[rgb(var(--primary))];
+  }
+}
+
+@layer utilities {
+  .text-balance { text-wrap: balance; }
+}
