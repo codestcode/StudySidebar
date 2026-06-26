@@ -62,60 +62,9 @@ OPENROUTER_API_KEY=your_openrouter_api_key
 PORT=3001
 ```
 
-You can find `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` in your Supabase project dashboard under **Project Settings → API**.
 
-### 3. Set Up Database Tables
 
-Run the following SQL in your Supabase SQL Editor (`https://supabase.com/dashboard/project/YOUR_PROJECT/sql/new`):
-
-```sql
-CREATE TABLE IF NOT EXISTS users (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  email TEXT UNIQUE NOT NULL,
-  password_hash TEXT NOT NULL,
-  created_at TIMESTAMPTZ DEFAULT NOW()
-);
-
-CREATE TABLE IF NOT EXISTS chat_history (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-  message TEXT NOT NULL,
-  response TEXT NOT NULL,
-  context TEXT,
-  created_at TIMESTAMPTZ DEFAULT NOW()
-);
-
-CREATE TABLE IF NOT EXISTS quizzes (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-  title TEXT,
-  topic TEXT NOT NULL,
-  difficulty TEXT NOT NULL DEFAULT 'medium',
-  content JSONB,
-  created_at TIMESTAMPTZ DEFAULT NOW()
-);
-
-CREATE TABLE IF NOT EXISTS quiz_answers (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  quiz_id UUID NOT NULL REFERENCES quizzes(id) ON DELETE CASCADE,
-  user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-  question_index INT NOT NULL,
-  selected_answer TEXT NOT NULL,
-  is_correct BOOLEAN NOT NULL,
-  created_at TIMESTAMPTZ DEFAULT NOW()
-);
-
-CREATE TABLE IF NOT EXISTS summaries (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-  title TEXT,
-  content TEXT NOT NULL,
-  source_url TEXT,
-  created_at TIMESTAMPTZ DEFAULT NOW()
-);
-```
-
-### 4. Build Both Projects
+  
 
 ```bash
 pnpm build
