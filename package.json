@@ -9,6 +9,9 @@
     "dev:backend": "pnpm --filter ./backend dev",
     "dev:extension": "pnpm --filter ./extension dev"
   },
+  "pnpm": {
+    "onlyBuiltDependencies": ["bcrypt"]
+  },
   "devDependencies": {
     "concurrently": "^8.2.2"
   }

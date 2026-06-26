@@ -1,9 +1,16 @@
 import { Router, type Request, type Response } from 'express';
+import rateLimit from 'express-rate-limit';
 import { supabase } from '../db/client.js';
-import { generateId, hashPassword, verifyPassword, generateToken } from '../utils/auth.js';
+import { generateId, hashPassword, verifyPassword, generateToken, isValidEmail, isValidPassword } from '../utils/auth.js';
 import { sendOtpEmail } from '../utils/email.js';
 
 const router: Router = Router();
+
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 10,
+  message: { error: 'Too many attempts, try again later' },
+});
 
 interface AuthRequest extends Request {
   body: {
@@ -13,14 +20,21 @@ interface AuthRequest extends Request {
   };
 }
 
-const tokenStore = new Map<string, { userId: string; expiresAt: number }>();
-
-router.post('/register', async (req: AuthRequest, res: Response) => {
+router.post('/register', authLimiter, async (req: AuthRequest, res: Response) => {
   try {
     const { email, password } = req.body;
 
     if (!email || !password) {
       return res.status(400).json({ error: 'Email and password required' });
+    }
+
+    if (!isValidEmail(email)) {
+      return res.status(400).json({ error: 'Invalid email format' });
+    }
+
+    const passwordError = isValidPassword(password);
+    if (passwordError) {
+      return res.status(400).json({ error: passwordError });
     }
 
     const { data: existing } = await supabase
@@ -33,7 +47,7 @@ router.post('/register', async (req: AuthRequest, res: Response) => {
     }
 
     const userId = generateId();
-    const passwordHash = hashPassword(password);
+    const passwordHash = await hashPassword(password);
 
     const { error } = await supabase.from('users').insert({
       id: userId,
@@ -44,9 +58,12 @@ router.post('/register', async (req: AuthRequest, res: Response) => {
     if (error) throw error;
 
     const token = generateToken();
-    tokenStore.set(token, {
-      userId,
-      expiresAt: Date.now() + 7 * 24 * 60 * 60 * 1000,
+    const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
+
+    await supabase.from('sessions').insert({
+      token,
+      user_id: userId,
+      expires_at: expiresAt,
     });
 
     res.json({ token, userId });
@@ -56,12 +73,16 @@ router.post('/register', async (req: AuthRequest, res: Response) => {
   }
 });
 
-router.post('/login', async (req: AuthRequest, res: Response) => {
+router.post('/login', authLimiter, async (req: AuthRequest, res: Response) => {
   try {
     const { email, password } = req.body;
 
     if (!email || !password) {
       return res.status(400).json({ error: 'Email and password required' });
+    }
+
+    if (!isValidEmail(email)) {
+      return res.status(400).json({ error: 'Invalid email format' });
     }
 
     const { data: userList } = await supabase
@@ -71,14 +92,17 @@ router.post('/login', async (req: AuthRequest, res: Response) => {
 
     const user = userList?.[0];
 
-    if (!user || !verifyPassword(password, user.password_hash)) {
-      return res.status(401).json({ error: 'Invalid credentials' });
+    if (!user || !(await verifyPassword(password, user.password_hash))) {
+      return res.status(401).json({ error: 'Email Or Password are incorrect' });
     }
 
     const token = generateToken();
-    tokenStore.set(token, {
-      userId: user.id,
-      expiresAt: Date.now() + 7 * 24 * 60 * 60 * 1000,
+    const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
+
+    await supabase.from('sessions').insert({
+      token,
+      user_id: user.id,
+      expires_at: expiresAt,
     });
 
     res.json({ token, userId: user.id });
@@ -88,12 +112,16 @@ router.post('/login', async (req: AuthRequest, res: Response) => {
   }
 });
 
-router.post('/forgot-password', async (req: AuthRequest, res: Response) => {
+router.post('/forgot-password', authLimiter, async (req: AuthRequest, res: Response) => {
   try {
     const { email } = req.body;
 
     if (!email) {
       return res.status(400).json({ error: 'Email required' });
+    }
+
+    if (!isValidEmail(email)) {
+      return res.status(400).json({ error: 'Invalid email format' });
     }
 
     const otp = String(Math.floor(100000 + Math.random() * 900000));
@@ -114,12 +142,17 @@ router.post('/forgot-password', async (req: AuthRequest, res: Response) => {
   }
 });
 
-router.post('/reset-password', async (req: AuthRequest, res: Response) => {
+router.post('/reset-password', authLimiter, async (req: AuthRequest, res: Response) => {
   try {
     const { email, otp, password } = req.body;
 
     if (!email || !otp || !password) {
       return res.status(400).json({ error: 'Email, OTP, and password required' });
+    }
+
+    const passwordError = isValidPassword(password);
+    if (passwordError) {
+      return res.status(400).json({ error: passwordError });
     }
 
     const { data: otpRecords } = await supabase
@@ -138,7 +171,7 @@ router.post('/reset-password', async (req: AuthRequest, res: Response) => {
       return res.status(400).json({ error: 'Invalid or expired OTP' });
     }
 
-    const passwordHash = hashPassword(password);
+    const passwordHash = await hashPassword(password);
 
     const { error: updateError } = await supabase
       .from('users')
@@ -159,7 +192,7 @@ router.post('/reset-password', async (req: AuthRequest, res: Response) => {
   }
 });
 
-export function authenticateToken(req: any, res: Response, next: any) {
+export async function authenticateToken(req: any, res: Response, next: any) {
   const authHeader = req.headers['authorization'];
   const token = authHeader?.split(' ')[1];
 
@@ -167,13 +200,20 @@ export function authenticateToken(req: any, res: Response, next: any) {
     return res.status(401).json({ error: 'No token provided' });
   }
 
-  const tokenData = tokenStore.get(token);
-  if (!tokenData || tokenData.expiresAt < Date.now()) {
-    tokenStore.delete(token);
+  const { data: sessions } = await supabase
+    .from('sessions')
+    .select('*')
+    .eq('token', token)
+    .gte('expires_at', new Date().toISOString())
+    .limit(1);
+
+  const session = sessions?.[0];
+
+  if (!session) {
     return res.status(401).json({ error: 'Invalid or expired token' });
   }
 
-  req.userId = tokenData.userId;
+  req.userId = session.user_id;
   req.token = token;
   next();
 }
