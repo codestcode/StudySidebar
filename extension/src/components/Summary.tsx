@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { api } from '../utils/api';
+import { Sparkles, FileText, Link, RotateCcw, Bookmark, Check } from 'lucide-react';
 import '../styles.css';
 
 export function Summary() {

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { api } from '../utils/api';
+import { Sparkles, ArrowLeft, CheckCircle, XCircle, RotateCcw } from 'lucide-react';
 import '../styles.css';
 
 interface Question {
@@ -170,6 +171,8 @@ export function Quiz() {
               ))}
             </div>
           </div>
+        </div>
+      )}
 
           <div>
             <label className="block text-sm font-medium mb-3">2. Difficulty level</label>

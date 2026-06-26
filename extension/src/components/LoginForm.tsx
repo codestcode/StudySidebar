@@ -23,16 +23,14 @@ export function LoginForm({
   onSubmit, onNavigateRegister, onNavigateForgot,
 }: LoginFormProps) {
   return (
-    <div className="w-full max-w-sm bg-white/80 backdrop-blur-xl rounded-3xl border border-white/40 shadow-2xl shadow-blue-500/5 p-8 animate-fade-slide-up">
-      <div className="flex flex-col items-center gap-3 mb-7">
-        <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-500 to-emerald-400 flex items-center justify-center shadow-lg shadow-blue-500/20">
-          <span className="text-white font-bold text-2xl">S</span>
-        </div>
-        <h1 className="text-xl font-bold font-poppins tracking-tight">
+    <div className="w-full max-w-sm glass3d rounded-3xl p-8 animate-fade-slide-up">
+      <img src="https://res.cloudinary.com/dgsorkijt/image/upload/v1782497606/logostudy_bg6rv9.png" alt="StudySidebar" className="w-36 h-36 mx-auto mb-3 rounded-3xl" />
+      <div className="flex flex-col items-center mb-7">
+        <h1 className="text-xl font-bold font-nunito tracking-tight">
           <span className="text-blue-600">Study</span>
           <span className="text-emerald-500">Sidebar</span>
         </h1>
-        <p className="text-slate-400 text-sm font-poppins text-center">Welcome back</p>
+        <p className="text-slate-400 text-sm font-nunito text-center">Welcome back</p>
       </div>
 
       {error && (
@@ -51,7 +49,7 @@ export function LoginForm({
               placeholder="user@gmail.com"
               required
               disabled={loading}
-              className="w-full pl-10 pr-3.5 py-3 rounded-xl bg-white border border-slate-200 text-sm text-slate-700 placeholder:text-slate-400 outline-none transition-all duration-200 focus:border-blue-400 focus:ring-[3px] focus:ring-blue-100 font-poppins"
+              className="w-full pl-10 pr-3.5 py-3 rounded-xl bg-white border border-slate-200 text-sm text-slate-700 placeholder:text-slate-400 outline-none transition-all duration-200 focus:border-blue-400 focus:ring-[3px] focus:ring-blue-100 font-nunito"
             />
           </div>
         </div>
@@ -67,7 +65,7 @@ export function LoginForm({
               placeholder="Enter your password"
               required
               disabled={loading}
-              className="w-full pl-10 pr-10 py-3 rounded-xl bg-white border border-slate-200 text-sm text-slate-700 placeholder:text-slate-400 outline-none transition-all duration-200 focus:border-blue-400 focus:ring-[3px] focus:ring-blue-100 font-poppins"
+              className="w-full pl-10 pr-10 py-3 rounded-xl bg-white border border-slate-200 text-sm text-slate-700 placeholder:text-slate-400 outline-none transition-all duration-200 focus:border-blue-400 focus:ring-[3px] focus:ring-blue-100 font-nunito"
             />
             <button
               type="button"

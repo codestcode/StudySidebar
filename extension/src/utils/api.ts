@@ -30,6 +30,28 @@ export const api = {
     return data;
   },
 
+  async forgotPassword(email: string) {
+    const response = await fetch(`${API_BASE}/auth/forgot-password`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email }),
+    });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.error);
+    return data;
+  },
+
+  async resetPassword(email: string, otp: string, password: string) {
+    const response = await fetch(`${API_BASE}/auth/reset-password`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, otp, password }),
+    });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.error);
+    return data;
+  },
+
   async *chatStream(message: string, context?: string) {
     const token = await storage.getToken();
     if (!token) throw new Error('Not authenticated');
