@@ -1,6 +1,7 @@
 import { Router, type Request, type Response } from 'express';
 import { supabase } from '../db/client.js';
 import { generateId, hashPassword, verifyPassword, generateToken } from '../utils/auth.js';
+import { sendOtpEmail } from '../utils/email.js';
 
 const router: Router = Router();
 
@@ -8,6 +9,7 @@ interface AuthRequest extends Request {
   body: {
     email?: string;
     password?: string;
+    otp?: string;
   };
 }
 
@@ -83,6 +85,77 @@ router.post('/login', async (req: AuthRequest, res: Response) => {
   } catch (error) {
     console.error('Login error:', error);
     res.status(500).json({ error: 'Login failed' });
+  }
+});
+
+router.post('/forgot-password', async (req: AuthRequest, res: Response) => {
+  try {
+    const { email } = req.body;
+
+    if (!email) {
+      return res.status(400).json({ error: 'Email required' });
+    }
+
+    const otp = String(Math.floor(100000 + Math.random() * 900000));
+    const expiresAt = new Date(Date.now() + 15 * 60 * 1000).toISOString();
+
+    await supabase.from('otps').insert({
+      email,
+      otp,
+      expires_at: expiresAt,
+    });
+
+    await sendOtpEmail(email, otp);
+
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Forgot password error:', error);
+    res.status(500).json({ error: 'Something went wrong' });
+  }
+});
+
+router.post('/reset-password', async (req: AuthRequest, res: Response) => {
+  try {
+    const { email, otp, password } = req.body;
+
+    if (!email || !otp || !password) {
+      return res.status(400).json({ error: 'Email, OTP, and password required' });
+    }
+
+    const { data: otpRecords } = await supabase
+      .from('otps')
+      .select('*')
+      .eq('email', email)
+      .eq('otp', otp)
+      .eq('used', false)
+      .gte('expires_at', new Date().toISOString())
+      .order('created_at', { ascending: false })
+      .limit(1);
+
+    const validOtp = otpRecords?.[0];
+
+    if (!validOtp) {
+      return res.status(400).json({ error: 'Invalid or expired OTP' });
+    }
+
+    const passwordHash = hashPassword(password);
+
+    const { error: updateError } = await supabase
+      .from('users')
+      .update({ password_hash: passwordHash })
+      .eq('email', email);
+
+    if (updateError) throw updateError;
+
+    await supabase
+      .from('otps')
+      .update({ used: true })
+      .eq('id', validOtp.id);
+
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Reset password error:', error);
+    res.status(500).json({ error: 'Something went wrong' });
   }
 });
 

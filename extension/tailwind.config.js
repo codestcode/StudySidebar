@@ -15,7 +15,7 @@ export default {
         },
       },
       fontFamily: {
-        poppins: ['Poppins', 'system-ui', 'sans-serif'],
+        nunito: ['Nunito', 'system-ui', 'sans-serif'],
       },
       borderRadius: {
         '2xl': '1rem',
@@ -23,5 +23,5 @@ export default {
       },
     },
   },
-  plugins: [],
+  plugins: [require('@tailwindcss/typography')],
 };

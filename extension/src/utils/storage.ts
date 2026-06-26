@@ -2,6 +2,7 @@ export interface StorageData {
   token?: string;
   userId?: string;
   email?: string;
+  darkMode?: boolean;
 }
 
 export const storage = {
