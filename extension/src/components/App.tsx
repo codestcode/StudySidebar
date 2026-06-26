@@ -3,12 +3,14 @@ import { Auth } from './Auth';
 import { Chat } from './Chat';
 import { Quiz } from './Quiz';
 import { Summary } from './Summary';
+import { PrivacyPolicy } from './PrivacyPolicy';
+import { Theme } from './Theme';
 import { storage } from '../utils/storage';
 import '../styles.css';
 
 export function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [activeTab, setActiveTab] = useState<'chat' | 'quiz' | 'summary'>('chat');
+  const [activeTab, setActiveTab] = useState<'chat' | 'quiz' | 'summary' | 'privacy' | 'theme'>('chat');
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -48,16 +50,24 @@ export function App() {
     <div className="flex flex-col h-full bg-slate-50">
       <header className="flex items-center justify-between px-4 py-4 border-b border-slate-200 bg-white">
         <h1 className="text-lg font-semibold text-slate-900">StudySidebar</h1>
-        <button
-          className="btn btn-primary text-xs py-1.5 px-3"
-          onClick={handleLogout}
-        >
-          Logout
-        </button>
+        <div className="flex gap-2">
+          <button
+            className="btn btn-secondary text-xs py-1.5 px-3"
+            onClick={() => setActiveTab('theme')}
+          >
+            Settings
+          </button>
+          <button
+            className="btn btn-primary text-xs py-1.5 px-3"
+            onClick={handleLogout}
+          >
+            Logout
+          </button>
+        </div>
       </header>
 
       <nav className="flex border-b border-slate-200 bg-white">
-        {(['chat', 'quiz', 'summary'] as const).map((tab) => (
+        {(['chat', 'quiz', 'summary', 'privacy', 'theme'] as const).map((tab) => (
           <button
             key={tab}
             className={`flex-1 py-3 px-4 text-sm font-medium transition-all ${
@@ -76,6 +86,8 @@ export function App() {
         {activeTab === 'chat' && <Chat />}
         {activeTab === 'quiz' && <Quiz />}
         {activeTab === 'summary' && <Summary />}
+        {activeTab === 'privacy' && <PrivacyPolicy />}
+        {activeTab === 'theme' && <Theme />}
       </main>
     </div>
   );
