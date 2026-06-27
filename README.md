@@ -165,93 +165,6 @@ Base URL: `http://localhost:3001/api`
 
 ---
 
-## Database Schema
-
-```sql
--- 7 tables total
-
-CREATE TABLE users (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  email TEXT UNIQUE NOT NULL,
-  password_hash TEXT NOT NULL,
-  created_at TIMESTAMPTZ DEFAULT NOW()
-);
-
-CREATE TABLE sessions (
-  token TEXT PRIMARY KEY,
-  user_id UUID REFERENCES users(id) ON DELETE CASCADE,
-  expires_at TIMESTAMPTZ NOT NULL,
-  created_at TIMESTAMPTZ DEFAULT NOW()
-);
-
-CREATE TABLE otps (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  email TEXT NOT NULL,
-  otp TEXT NOT NULL,
-  used BOOLEAN DEFAULT FALSE,
-  expires_at TIMESTAMPTZ NOT NULL,
-  created_at TIMESTAMPTZ DEFAULT NOW()
-);
-
-CREATE TABLE chat_history (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id UUID REFERENCES users(id) ON DELETE CASCADE,
-  message TEXT NOT NULL,
-  response TEXT NOT NULL,
-  context TEXT,
-  created_at TIMESTAMPTZ DEFAULT NOW()
-);
-
-CREATE TABLE quizzes (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id UUID REFERENCES users(id) ON DELETE CASCADE,
-  title TEXT,
-  topic TEXT NOT NULL,
-  difficulty TEXT NOT NULL,
-  content JSONB NOT NULL,
-  created_at TIMESTAMPTZ DEFAULT NOW()
-);
-
-CREATE TABLE quiz_answers (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  quiz_id UUID REFERENCES quizzes(id) ON DELETE CASCADE,
-  user_id UUID REFERENCES users(id) ON DELETE CASCADE,
-  question_index INT NOT NULL,
-  selected_answer TEXT NOT NULL,
-  is_correct BOOLEAN NOT NULL,
-  created_at TIMESTAMPTZ DEFAULT NOW()
-);
-
-CREATE TABLE summaries (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id UUID REFERENCES users(id) ON DELETE CASCADE,
-  title TEXT,
-  content TEXT NOT NULL,
-  source_url TEXT,
-  created_at TIMESTAMPTZ DEFAULT NOW()
-);
-```
-
----
-
-## Configuration
-
-### `backend/.env`
-```env
-SUPABASE_URL=https://your-project.supabase.co
-SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
-OPENROUTER_API_KEY=sk-or-...
-PORT=3001
-
-# Optional: Email for password reset
-SMTP_HOST=smtp.gmail.com
-SMTP_PORT=587
-SMTP_USER=your@email.com
-SMTP_PASS=your-app-password
-```
-
----
-
 ## Scripts
 
 | Command                     | Description                          |
@@ -275,4 +188,7 @@ SMTP_PASS=your-app-password
 
 ## License
 
-MIT
+MIT © 2026 StudySidebar 
+---
+
+*From passive reader to active master.*
