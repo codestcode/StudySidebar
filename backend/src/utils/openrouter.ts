@@ -1,10 +1,20 @@
 const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY;
-const MODEL = 'openrouter/auto'; // or specific model like meta-llama/llama-2-7b-chat
+const MODEL = 'openrouter/auto';
 
 interface ChatMessage {
   role: 'user' | 'assistant' | 'system';
   content: string;
 }
+
+const MASTER_SYSTEM_PROMPT = `You are an intelligent reading assistant embedded in a browser extension for students and researchers. Your job is to summarize webpage content in a way that is clear, well-organized, and immediately useful. 
+
+Rules you must always follow:
+- Never start with phrases like "This article...", "This page...", or "The content..."
+- Never add meta-commentary like "Here is your summary" or "I hope this helps"
+- Use clean, precise language — no filler words
+- Preserve technical terms, names, and definitions exactly as they appear
+- If the content has multiple distinct sections, reflect that structure in your output
+- Output only the summary, nothing else`;
 
 export async function* streamChatResponse(
   messages: ChatMessage[],
@@ -14,9 +24,11 @@ export async function* streamChatResponse(
     throw new Error('OPENROUTER_API_KEY is not set');
   }
 
-  const allMessages: ChatMessage[] = systemPrompt
-    ? [{ role: 'system', content: systemPrompt }, ...messages]
-    : messages;
+  const systemMessages: ChatMessage[] = [{ role: 'system', content: MASTER_SYSTEM_PROMPT }];
+  if (systemPrompt) {
+    systemMessages.push({ role: 'system', content: systemPrompt });
+  }
+  const allMessages: ChatMessage[] = [...systemMessages, ...messages];
 
   const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
     method: 'POST',
@@ -103,22 +115,123 @@ Return ONLY valid JSON, no other text.`;
   }
 }
 
-export async function summarizeContent(content: string): Promise<string> {
+const SUMMARY_PROMPTS: Record<string, (pageContent: string) => string> = {
+  'short-paragraph': (pageContent) =>
+    `Summarize the following content in exactly 3 sentences. 
+Each sentence must capture a distinct key point. 
+Together, the 3 sentences should give a complete picture of what the content is about.
+
+Content:
+${pageContent}`,
+  'short-bullet': (pageContent) =>
+    `Extract the 3 most important takeaways from the following content.
+Write each as a single sharp bullet point starting with "•".
+Each bullet must be one sentence, specific, and self-contained.
+
+Content:
+${pageContent}`,
+  'short-concept': (pageContent) =>
+    `Identify the 3 core concepts in the following content.
+For each concept use this format:
+
+🔑 **[Concept Name]**
+One sentence defining it in context.
+
+No extra text. Just the 3 concepts.
+
+Content:
+${pageContent}`,
+  'medium-paragraph': (pageContent) =>
+    `Write a single, well-structured paragraph (5–7 sentences) summarizing the following content.
+Structure it like this: open with the main topic → explain the core ideas → close with the key takeaway or conclusion.
+Write for an intelligent reader who hasn't seen the page.
+
+Content:
+${pageContent}`,
+  'medium-bullet': (pageContent) =>
+    `Summarize the following content as 6–8 bullet points.
+Rules:
+- Cover the full scope — main idea, supporting points, and conclusion
+- Each bullet = 1 clear sentence
+- Order bullets from most important to least
+- Start each bullet with "•"
+
+Content:
+${pageContent}`,
+  'medium-concept': (pageContent) =>
+    `Identify the 5–7 key concepts from the following content.
+For each concept use this exact format:
+
+🔑 **[Concept Name]**
+2 sentences: what it is, and why it matters in this context.
+
+Order them from foundational to advanced.
+
+Content:
+${pageContent}`,
+  'detailed-paragraph': (pageContent) =>
+    `Write a comprehensive multi-paragraph summary of the following content.
+
+Structure:
+**Overview** — What is this content about and why does it matter? (2–3 sentences)
+
+**Main Ideas** — Walk through the key arguments, sections, or topics covered. (3–5 sentences per major idea, use a new paragraph for each)
+
+**Conclusion & Takeaways** — What should the reader walk away knowing or doing? (2–3 sentences)
+
+Use clear paragraph breaks. Write at a level appropriate for a university student.
+
+Content:
+${pageContent}`,
+  'detailed-bullet': (pageContent) =>
+    `Write a thorough bullet-point summary of the following content.
+
+Format:
+## [Section or Topic Name]
+- [Point]
+- [Point]
+
+Rules:
+- Create a new ## section for each major topic or section in the content
+- 3–6 bullets per section
+- Each bullet = 1–2 sentences, specific and informative
+- End with a ## Key Takeaways section with 3–5 final bullets
+
+Content:
+${pageContent}`,
+  'detailed-concept': (pageContent) =>
+    `Extract every important concept, term, and idea from the following content.
+
+For each one use this format:
+
+🔑 **[Concept Name]**
+Definition: What is it? (1–2 sentences)
+Context: How is it used or discussed in this content? (1–2 sentences)
+Related to: [other concept names if applicable]
+
+---
+
+Order from most fundamental to most advanced. Be thorough — this is a study reference.
+
+Content:
+${pageContent}`,
+};
+
+export async function summarizeContent(content: string, length: string = 'medium', format: string = 'paragraph'): Promise<string> {
   if (!OPENROUTER_API_KEY) {
     throw new Error('OPENROUTER_API_KEY is not set');
   }
 
-  const systemPrompt = `You are an expert summarizer. Create a concise, clear summary of the provided content in 3-5 bullet points.`;
+  const key = `${length}-${format}` as keyof typeof SUMMARY_PROMPTS;
+  const promptFn = SUMMARY_PROMPTS[key] || SUMMARY_PROMPTS['medium-paragraph'];
+  const userPrompt = promptFn(content);
 
   const messages: ChatMessage[] = [
-    {
-      role: 'user',
-      content: `Please summarize this:\n\n${content}`,
-    },
+    { role: 'user', content: userPrompt },
   ];
 
   let fullResponse = '';
-  for await (const chunk of streamChatResponse(messages, systemPrompt)) {
+  for await (const chunk of streamChatResponse(messages)) {
     fullResponse += chunk;
   }
 

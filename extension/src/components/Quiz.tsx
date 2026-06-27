@@ -103,152 +103,163 @@ export function Quiz() {
 
   if (mode === 'generate') {
     return (
-      <div className="flex flex-col h-full gap-4">
-        <h2 className="text-base font-semibold text-slate-900">Create Quiz</h2>
+      <div className="h-full overflow-y-auto p-4">
+        <div className="max-w-lg mx-auto space-y-4">
 
-        {error && (
-          <div className="p-3 rounded-2xl bg-red-50 text-red-500 text-sm">{error}</div>
-        )}
+          {error && (
+            <div className="p-3 rounded-2xl bg-red-50 text-red-500 text-sm">{error}</div>
+          )}
 
-        <form onSubmit={handleGenerate} className="flex flex-col gap-4 flex-1">
-          <div>
-            <label className="block text-sm font-medium mb-1.5">Topic *</label>
-            <input
-              type="text"
-              value={topic}
-              onChange={(e) => setTopic(e.target.value)}
-              placeholder="e.g., JavaScript Arrays"
-              required
-              disabled={loading}
-              className="input"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium mb-3">1. Number of Questions</label>
-            <p className="text-xs text-slate-400 mb-3">How many questions do you want?</p>
-            <div className="flex items-center gap-2 mb-3">
-              <button
-                type="button"
-                onClick={() => setNumQuestions(Math.max(1, numQuestions - 1))}
-                disabled={loading || numQuestions <= 1}
-                className="w-8 h-8 flex items-center justify-center rounded-lg border border-slate-200 hover:bg-slate-50 text-slate-600"
-              >
-                −
-              </button>
-              <input
-                type="number"
-                value={numQuestions}
-                onChange={(e) => setNumQuestions(Math.max(1, parseInt(e.target.value) || 1))}
-                disabled={loading}
-                className="w-12 h-8 text-center border border-slate-200 rounded-lg"
-                min="1"
-              />
-              <button
-                type="button"
-                onClick={() => setNumQuestions(numQuestions + 1)}
-                disabled={loading}
-                className="w-8 h-8 flex items-center justify-center rounded-lg border border-slate-200 hover:bg-slate-50 text-slate-600"
-              >
-                +
-              </button>
+          <div className="glass3d rounded-3xl p-6 animate-fade-slide-up">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-emerald-400 flex items-center justify-center shadow-lg shadow-blue-500/20 overflow-hidden">
+                <img src="/images/brain.png" alt="" className="w-6 h-6 object-contain" />
+              </div>
+              <div>
+                <h2 className="text-lg font-semibold text-slate-900 dark:text-white font-nunito">Create Quiz</h2>
+                <p className="text-xs text-slate-400 font-nunito">Generate custom quizzes on any topic</p>
+              </div>
             </div>
-            <div className="flex gap-2 flex-wrap">
-              {[5, 10, 15, 20, 25].map((n) => (
-                <button
-                  key={n}
-                  type="button"
-                  onClick={() => setNumQuestions(n)}
+
+            <form onSubmit={handleGenerate} className="space-y-5">
+              <div>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Topic *</label>
+                <input
+                  type="text"
+                  value={topic}
+                  onChange={(e) => setTopic(e.target.value)}
+                  placeholder="e.g., JavaScript Arrays"
+                  required
                   disabled={loading}
-                  className={`w-10 h-8 text-xs rounded-lg border transition-colors ${
-                    numQuestions === n
-                      ? 'bg-blue-500 text-white border-blue-500'
-                      : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300'
-                  }`}
-                >
-                  {n}
-                </button>
-              ))}
-            </div>
+                  className="input"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Number of Questions</label>
+                <div className="flex items-center gap-2 mb-3">
+                  <button
+                    type="button"
+                    onClick={() => setNumQuestions(Math.max(1, numQuestions - 1))}
+                    disabled={loading || numQuestions <= 1}
+                    className="w-8 h-8 flex items-center justify-center rounded-lg border border-slate-200 hover:bg-slate-50 text-slate-600 disabled:opacity-40"
+                  >
+                    −
+                  </button>
+                  <input
+                    type="number"
+                    value={numQuestions}
+                    onChange={(e) => setNumQuestions(Math.max(1, parseInt(e.target.value) || 1))}
+                    disabled={loading}
+                    className="w-14 h-8 text-center border border-slate-200 rounded-lg text-sm"
+                    min="1"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setNumQuestions(numQuestions + 1)}
+                    disabled={loading}
+                    className="w-8 h-8 flex items-center justify-center rounded-lg border border-slate-200 hover:bg-slate-50 text-slate-600 disabled:opacity-40"
+                  >
+                    +
+                  </button>
+                </div>
+                <div className="flex gap-2 flex-wrap">
+                  {[5, 10, 15, 20, 25].map((n) => (
+                    <button
+                      key={n}
+                      type="button"
+                      onClick={() => setNumQuestions(n)}
+                      disabled={loading}
+                      className={`w-10 h-8 text-xs rounded-lg border transition-colors ${
+                        numQuestions === n
+                          ? 'bg-blue-500 text-white border-blue-500'
+                          : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300'
+                      }`}
+                    >
+                      {n}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Difficulty level</label>
+                <div className="flex gap-2">
+                  {(['easy', 'medium', 'hard'] as const).map((level) => (
+                    <label
+                      key={level}
+                      className={`flex-1 px-3 py-2.5 text-xs font-medium rounded-xl border-2 cursor-pointer transition-all text-center ${
+                        difficulty === level
+                          ? level === 'easy'
+                            ? 'border-green-500 bg-green-50 text-green-700'
+                            : level === 'medium'
+                            ? 'border-blue-500 bg-blue-50 text-blue-700'
+                            : 'border-red-500 bg-red-50 text-red-700'
+                          : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300'
+                      }`}
+                    >
+                      <input
+                        type="radio"
+                        name="difficulty"
+                        value={level}
+                        checked={difficulty === level}
+                        onChange={() => setDifficulty(level)}
+                        disabled={loading}
+                        className="hidden"
+                      />
+                      {level.charAt(0).toUpperCase() + level.slice(1)}
+                    </label>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Question Type</label>
+                <div className="space-y-2">
+                  {[
+                    { id: 'mcq', label: 'Multiple Choice (MCQ)' },
+                    { id: 'truefalse', label: 'True / False' },
+                    { id: 'essay', label: 'Essay (Short Answer)' },
+                  ].map((type) => (
+                    <label key={type.id} className="flex items-center gap-3 p-3 rounded-xl border-2 border-slate-200 bg-white cursor-pointer hover:border-slate-300 transition-colors">
+                      <input
+                        type="checkbox"
+                        checked={questionTypes.has(type.id)}
+                        onChange={(e) => {
+                          const newTypes = new Set(questionTypes);
+                          if (e.target.checked) newTypes.add(type.id);
+                          else newTypes.delete(type.id);
+                          setQuestionTypes(newTypes);
+                        }}
+                        disabled={loading}
+                        className="accent-blue-500 w-4 h-4"
+                      />
+                      <span className="text-sm text-slate-700">{type.label}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+
+              <button
+                type="submit"
+                className="w-full py-3 rounded-2xl bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600 text-white text-sm font-semibold shadow-lg shadow-blue-500/25 transition-all active:scale-[0.98] disabled:opacity-50"
+                disabled={loading || !topic.trim() || questionTypes.size === 0}
+              >
+                {loading ? (
+                  <span className="inline-flex items-center gap-2">
+                    <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
+                    Generating...
+                  </span>
+                ) : (
+                  <span className="inline-flex items-center gap-2">
+                    <Sparkles className="w-4 h-4" />
+                    Generate Quiz
+                  </span>
+                )}
+              </button>
+            </form>
           </div>
         </div>
-      )}
-
-          <div>
-            <label className="block text-sm font-medium mb-3">2. Difficulty level</label>
-            <p className="text-xs text-slate-400 mb-3">Select the difficulty level</p>
-            <div className="flex gap-2">
-              {(['easy', 'medium', 'hard'] as const).map((level) => (
-                <label
-                  key={level}
-                  className={`px-4 py-2 text-xs font-medium rounded-lg border cursor-pointer transition-colors ${
-                    difficulty === level
-                      ? level === 'easy'
-                        ? 'bg-green-50 border-green-300 text-green-700'
-                        : level === 'medium'
-                        ? 'bg-blue-50 border-blue-500 text-white bg-blue-500'
-                        : 'bg-red-50 border-red-300 text-red-700'
-                      : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300'
-                  }`}
-                >
-                  <input
-                    type="radio"
-                    name="difficulty"
-                    value={level}
-                    checked={difficulty === level}
-                    onChange={() => setDifficulty(level)}
-                    disabled={loading}
-                    className="hidden"
-                  />
-                  {level.charAt(0).toUpperCase() + level.slice(1)}
-                </label>
-              ))}
-            </div>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium mb-3">3. Question Type</label>
-            <p className="text-xs text-slate-400 mb-3">Select one or more question type</p>
-            <div className="space-y-2">
-              {[
-                { id: 'mcq', label: 'Multiple Choice (MCQ)' },
-                { id: 'truefalse', label: 'True / False' },
-                { id: 'essay', label: 'Essay (Short Answer)' },
-              ].map((type) => (
-                <label key={type.id} className="flex items-center gap-2 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={questionTypes.has(type.id)}
-                    onChange={(e) => {
-                      const newTypes = new Set(questionTypes);
-                      if (e.target.checked) {
-                        newTypes.add(type.id);
-                      } else {
-                        newTypes.delete(type.id);
-                      }
-                      setQuestionTypes(newTypes);
-                    }}
-                    disabled={loading}
-                    className="accent-blue-500"
-                  />
-                  <span className="text-sm text-slate-700">{type.label}</span>
-                </label>
-              ))}
-            </div>
-          </div>
-
-          <button
-            type="submit"
-            className="btn btn-gradient w-full mt-auto"
-            disabled={loading || !topic.trim() || questionTypes.size === 0}
-          >
-            {loading ? (
-              <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
-            ) : (
-              'Generate Quiz'
-            )}
-          </button>
-        </form>
       </div>
     );
   }

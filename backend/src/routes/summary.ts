@@ -11,12 +11,14 @@ interface SummaryRequest extends Request {
     content?: string;
     title?: string;
     sourceUrl?: string;
+    length?: string;
+    format?: string;
   };
 }
 
 router.post('/generate', async (req: SummaryRequest, res: Response) => {
   try {
-    const { content, title, sourceUrl } = req.body;
+    const { content, title, sourceUrl, length, format } = req.body;
     const userId = req.userId;
 
     if (!userId) {
@@ -34,7 +36,7 @@ router.post('/generate', async (req: SummaryRequest, res: Response) => {
     let fullSummary = '';
 
     try {
-      fullSummary = await summarizeContent(content);
+      fullSummary = await summarizeContent(content, length, format);
       res.write(`data: ${JSON.stringify({ chunk: fullSummary })}\n\n`);
     } catch (streamError) {
       console.error('Stream error:', streamError);

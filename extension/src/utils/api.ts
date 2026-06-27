@@ -108,7 +108,7 @@ export const api = {
     return response.json();
   },
 
-  async generateQuiz(topic: string, difficulty: string, title?: string) {
+  async generateQuiz(topic: string, difficulty: string, title?: string, numQuestions?: number, questionTypes?: string[]) {
     const token = await storage.getToken();
     if (!token) throw new Error('Not authenticated');
 
@@ -118,7 +118,7 @@ export const api = {
         'Content-Type': 'application/json',
         Authorization: `Bearer ${token}`,
       },
-      body: JSON.stringify({ topic, difficulty, title }),
+      body: JSON.stringify({ topic, difficulty, title, numQuestions, questionTypes }),
     });
 
     if (!response.ok) throw new Error('Quiz generation failed');
@@ -154,7 +154,7 @@ export const api = {
     return response.json();
   },
 
-  async *generateSummary(content: string, title?: string, sourceUrl?: string) {
+  async *generateSummary(content: string, title?: string, sourceUrl?: string, length?: string, format?: string) {
     const token = await storage.getToken();
     if (!token) throw new Error('Not authenticated');
 
@@ -164,7 +164,7 @@ export const api = {
         'Content-Type': 'application/json',
         Authorization: `Bearer ${token}`,
       },
-      body: JSON.stringify({ content, title, sourceUrl }),
+      body: JSON.stringify({ content, title, sourceUrl, length, format }),
     });
 
     if (!response.ok) throw new Error('Summary generation failed');

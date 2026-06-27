@@ -3,6 +3,7 @@ export interface StorageData {
   userId?: string;
   email?: string;
   darkMode?: boolean;
+  chatMessages?: { role: 'user' | 'assistant'; content: string }[];
 }
 
 export const storage = {

@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { api } from '../utils/api';
+import { storage } from '../utils/storage';
 import { Send, Sparkles, User, Bot, FileText, Copy, Check, Globe, Loader2, X, ChevronDown, ChevronUp, Trash2 } from 'lucide-react';
 import '../styles.css';
 
@@ -123,6 +124,11 @@ export function Chat({ initialContext }: ChatProps) {
 
   useEffect(() => {
     (async () => {
+      const local = await storage.get(['chatMessages']);
+      if (local.chatMessages?.length) {
+        setMessages(local.chatMessages.filter((m: Message) => m.content?.trim()));
+        return;
+      }
       try {
         const history = await api.getChatHistory();
         let loaded: Message[] = [];
@@ -131,7 +137,11 @@ export function Chat({ initialContext }: ChatProps) {
         } else if (history?.messages?.length) {
           loaded = history.messages;
         }
-        setMessages(loaded.filter(m => m.content?.trim()));
+        const filtered = loaded.filter(m => m.content?.trim());
+        setMessages(filtered);
+        if (filtered.length) {
+          await storage.set({ chatMessages: filtered });
+        }
       } catch {
         // No history available
       }
@@ -184,6 +194,12 @@ export function Chat({ initialContext }: ChatProps) {
       }
     })();
   }, []);
+
+  useEffect(() => {
+    if (messages.length) {
+      storage.set({ chatMessages: messages });
+    }
+  }, [messages]);
 
   const handleScroll = () => {
     const el = messagesContainerRef.current;
@@ -312,6 +328,7 @@ export function Chat({ initialContext }: ChatProps) {
   const clearChat = () => {
     setMessages([]);
     setError('');
+    storage.set({ chatMessages: [] });
     inputRef.current?.focus();
   };
 
