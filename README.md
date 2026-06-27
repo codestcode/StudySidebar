@@ -1,6 +1,8 @@
+<img alt="Hirfa Logo" src="./Studysidebardark.png" height="700" />
+
 # StudySidebar
 
-AI-powered Chrome extension that turns your browser sidebar into a full study assistant — chat, quiz, and summarize any web content.
+AI-powered Chrome extension that turns your browser sidebar into a full study assistant , chat, quiz, and summarize any web content.
 
 ---
 
