@@ -1,269 +1,277 @@
 # StudySidebar
 
-An AI-powered Chrome extension that helps CS students study more effectively with three main features:
-- **Chat**: Ask AI questions about your coursework with optional context
-- **Quiz**: Auto-generate quizzes on any topic to test your knowledge
-- **Summary**: Summarize lecture notes, code, or any study material
+AI-powered Chrome extension that turns your browser sidebar into a full study assistant — chat, quiz, and summarize any web content.
+
+---
+
+## Features
+
+### AI Chat Assistant
+- Stream AI responses with real-time Markdown rendering
+- Send any page's content as context for contextual Q&A
+- Collapsible context panel with character count and manual editing
+- Chat history auto-saved and restored across sessions
+- Copy individual AI responses or clear the entire conversation
+
+### Quiz Generator (4-phase workflow)
+- **Generate** — Choose topic (auto-fetch from current page or manual entry), number of questions (1–25+ preset buttons), difficulty (Easy/Medium/Hard), and question types (Multiple Choice, True/False, Essay)
+- **Take** — Navigate questions with progress bar, select or type answers, submit for scoring
+- **Result** — Circular score display with pass/fail assessment, wrong-answer preview, perfect-score banner
+- **Review** — Full answer review with correct/incorrect indicators
+
+### Content Summarization
+- Summarize any webpage or pasted text
+- 9 combinations: Short (3 key points) / Medium (1 paragraph) / Detailed (full summary) × Paragraph / Bullet Point / Key Concept
+- Streaming responses with real-time updates
+- Copy and regenerate with one click
+
+### Page Content Extractor
+- Automatically reads current tab content, stripped of scripts, nav, and ads
+- Displays word/character count and page URL
+- Editable before sending to Chat or generating Quiz/Summary
+- Inject fallback via scripting API when content script isn't available
+
+### Authentication & Security
+- Register, Login, Forgot Password with OTP verification, and Reset Password
+- 6-digit OTP input with auto-advance and paste support
+- Password requirements (8+ chars, uppercase, number)
+- "Remember Me" and 7-day session token expiry
+- Rate-limited endpoints (10 req/15min auth, 60 req/15min global)
+- bcrypt password hashing (12 rounds)
+
+### Settings Panel
+- Dark mode toggle with Moon/Sun icons
+- About Us, Privacy Policy, Vision, Contact Us pages
+
+### Extension Integration
+- Chrome Side Panel (full-featured) and Popup (quick access)
+- Toolbar icon click opens side panel
+- Text selection triggers via `mouseup` listener
+- Works on all URLs (including `chrome://` pages via scripting fallback)
+- Chrome storage for token and preference persistence
+
+---
+
+## Tech Stack
+
+| Layer        | Technology                                            |
+|-------------|-------------------------------------------------------|
+| **Frontend** | React 19, TypeScript, Vite, Tailwind CSS, Lucide Icons |
+| **Backend**  | Express.js, TypeScript, OpenRouter API, Nodemailer     |
+| **Database** | Supabase (PostgreSQL)                                  |
+| **Auth**     | bcrypt, custom session tokens, OTP-based password reset |
+
+---
 
 ## Project Structure
 
 ```
 studysidebar/
-├── backend/                 # Express.js API server
+├── backend/
 │   ├── src/
-│   │   ├── db/client.ts    # Supabase database client
-│   │   ├── routes/         # API endpoints (auth, chat, quiz, summary)
-│   │   ├── utils/          # Auth, AI streaming, utilities
-│   │   └── index.ts        # Express server
-│   ├── .env                # Configuration (Supabase keys, OpenRouter key)
+│   │   ├── routes/           # auth.ts, chat.ts, quiz.ts, summary.ts
+│   │   ├── utils/            # auth.ts, openrouter.ts, email.ts
+│   │   ├── db/client.ts      # Supabase client
+│   │   └── index.ts          # Express server
 │   ├── .env.example
-│   ├── package.json
-│   └── tsconfig.json
-├── extension/               # Chrome extension (React 19 + Vite)
+│   └── package.json
+├── extension/
 │   ├── src/
-│   │   ├── components/     # React UI components
-│   │   ├── utils/          # API client, Chrome storage wrapper
-│   │   ├── styles.css      # Extension styling
-│   │   ├── popup.html & popup.tsx
-│   │   ├── sidepanel.html & sidepanel.tsx
-│   │   ├── background.ts   # Service worker
-│   │   ├── content.ts      # Content script
-│   │   └── manifest.json   # Chrome manifest
+│   │   ├── components/       # App, Auth, Chat, Quiz*, Summary, Settings, Theme
+│   │   ├── utils/            # api.ts (backend client), storage.ts (Chrome storage)
+│   │   ├── popup.html/.tsx   # Popup entry point
+│   │   ├── sidepanel.html/.tsx # Side panel entry point
+│   │   ├── background.ts     # Service worker
+│   │   ├── content.ts        # Content script
+│   │   ├── manifest.json     # Chrome manifest
+│   │   └── styles.css        # Custom styling (glass3d, animations)
 │   ├── vite.config.ts
-│   ├── package.json
-│   └── tsconfig.json
-├── package.json             # Root monorepo
-└── pnpm-workspace.yaml      # Workspace config
+│   └── package.json
+├── package.json               # Root monorepo orchestrator
+├── pnpm-workspace.yaml
+├── QUICKSTART.md
+└── README.md
 ```
 
-## Prerequisites
+---
 
+## Quick Start
+
+### Prerequisites
 - Node.js 18+
-- pnpm
-- Supabase account (free tier at [supabase.com](https://supabase.com))
-- OpenRouter API key at [openrouter.ai](https://openrouter.ai)
+- [pnpm](https://pnpm.io/installation)
+- [Supabase](https://supabase.com) project (free tier)
+- [OpenRouter](https://openrouter.ai) API key
 
-## Setup
-
-### 1. Install Dependencies
+### Setup
 
 ```bash
+# Install dependencies
 pnpm install
-```
 
-### 2. Configure Environment Variables
+# Configure environment
+cp backend/.env.example backend/.env
+# Edit backend/.env with your Supabase URL, service role key, and OpenRouter key
 
-Create `backend/.env` (or copy from `.env.example`):
+# Set up database tables in Supabase SQL Editor
+# (see Database Schema below)
 
-```env
-SUPABASE_URL=https://your-project.supabase.co
-SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
-OPENROUTER_API_KEY=your_openrouter_api_key
-PORT=3001
-```
-
-
-
-  
-
-```bash
-pnpm build
-```
-
-Or build individually:
-
-```bash
-pnpm --filter ./backend build
+# Build extension
 pnpm --filter ./extension build
 ```
 
-## Development
-
-### Run Backend
+### Run
 
 ```bash
+# Start backend (port 3001)
 pnpm dev:backend
 ```
 
-The API will run on `http://localhost:3001`
-
-### Build & Load Extension
-
-```bash
-pnpm --filter ./extension build
-```
-
-Then load the extension in Chrome:
+### Load Extension in Chrome
 1. Open `chrome://extensions`
 2. Enable "Developer mode"
 3. Click "Load unpacked"
-4. Select `extension/dist` folder
+4. Select `extension/dist`
 
-### Run Both Simultaneously
-
+### Or run both simultaneously
 ```bash
 pnpm dev
 ```
 
+---
+
 ## API Endpoints
 
-### Authentication
-- `POST /api/auth/register` — Create new account
-- `POST /api/auth/login` — Login to existing account
+Base URL: `http://localhost:3001/api`
 
-### Chat (requires auth token)
-- `POST /api/chat/message` — Send message (streaming response)
-- `GET /api/chat/history` — Get chat history
+### Auth (no token required)
+| Method | Endpoint                  | Description                    |
+|--------|---------------------------|--------------------------------|
+| POST   | `/auth/register`          | Create account                 |
+| POST   | `/auth/login`             | Login                          |
+| POST   | `/auth/forgot-password`   | Request OTP                    |
+| POST   | `/auth/reset-password`    | Reset password with OTP        |
 
-### Quiz (requires auth token)
-- `POST /api/quiz/generate` — Generate new quiz
-- `POST /api/quiz/submit` — Submit quiz answers and get score
-- `GET /api/quiz/list` — Get user's quizzes
+### Protected (Bearer token required)
+| Method | Endpoint                  | Description                    |
+|--------|---------------------------|--------------------------------|
+| POST   | `/chat/message`           | Send message (SSE streaming)   |
+| GET    | `/chat/history`           | Get chat history               |
+| POST   | `/quiz/generate`          | Generate quiz                  |
+| POST   | `/quiz/submit`            | Submit answers and get score   |
+| GET    | `/quiz/list`              | List user's quizzes            |
+| POST   | `/summary/generate`       | Generate summary (SSE streaming) |
+| GET    | `/summary/list`           | List user's summaries          |
 
-### Summary (requires auth token)
-- `POST /api/summary/generate` — Generate summary from content (streaming)
-- `GET /api/summary/list` — Get saved summaries
-
-## Extension Features
-
-### Chat Tab
-- Ask questions with optional course context
-- Real-time streaming responses from AI
-- Automatic history persistence
-
-### Quiz Tab
-- Select topic and difficulty level
-- Auto-generates 5 multiple-choice questions
-- Immediate feedback on answers with score
-
-### Summary Tab
-- Paste lecture notes, code, or articles
-- Get concise bulleted summaries
-- Save summaries for later review
-
-## Authentication
-
-The extension uses simple email/password authentication:
-- Credentials stored securely in Chrome's local storage
-- Auth token sent with each API request
-- Session expires after 7 days of inactivity
-
-## AI Integration
-
-Uses **OpenRouter** for LLM access:
-- Streaming responses for real-time chat
-- Configurable AI model
-- Cost-effective API with no rate limits
-
-To get an API key:
-1. Visit [openrouter.ai](https://openrouter.ai)
-2. Create account and get API key
-3. Add to `backend/.env`
-
-## Building for Production
-
-### Extension Distribution
-
-```bash
-pnpm build
-# Outputs to extension/dist/
-```
-
-To publish to Chrome Web Store:
-1. Zip the `extension/dist` folder
-2. Upload to [Chrome Web Store Developer Dashboard](https://chrome.google.com/webstore/category/extensions)
-
-### Backend Deployment
-
-```bash
-cd backend
-pnpm build
-```
-
-Deploy the built files to your hosting (Vercel, Railway, Render, etc.) and ensure the Supabase URL and service role key are set as environment variables.
-
-## Tech Stack
-
-**Backend:**
-- Express.js — REST API framework
-- Supabase — Database (PostgreSQL via REST API)
-- OpenRouter — AI model access
-
-**Extension:**
-- React 19 — UI framework
-- TypeScript — Type safety
-- Vite — Fast build tool
-- Chrome APIs — Extension features
-
-## Troubleshooting
-
-### Extension won't load
-- Ensure build succeeds: `pnpm --filter ./extension build`
-- Check `extension/dist` folder exists
-- Open Chrome DevTools for the extension (right-click → Inspect)
-
-### Backend API errors
-- Verify `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` are set correctly
-- Check `OPENROUTER_API_KEY` is valid
-- Review server logs: `pnpm dev:backend`
-
-### Authentication fails
-- Ensure backend is running on port 3001
-- Check email/password match in database
-- Browser console shows detailed error messages
+---
 
 ## Database Schema
 
+```sql
+-- 7 tables total
+
+CREATE TABLE users (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  email TEXT UNIQUE NOT NULL,
+  password_hash TEXT NOT NULL,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE TABLE sessions (
+  token TEXT PRIMARY KEY,
+  user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+  expires_at TIMESTAMPTZ NOT NULL,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE TABLE otps (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  email TEXT NOT NULL,
+  otp TEXT NOT NULL,
+  used BOOLEAN DEFAULT FALSE,
+  expires_at TIMESTAMPTZ NOT NULL,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE TABLE chat_history (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+  message TEXT NOT NULL,
+  response TEXT NOT NULL,
+  context TEXT,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE TABLE quizzes (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+  title TEXT,
+  topic TEXT NOT NULL,
+  difficulty TEXT NOT NULL,
+  content JSONB NOT NULL,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE TABLE quiz_answers (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  quiz_id UUID REFERENCES quizzes(id) ON DELETE CASCADE,
+  user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+  question_index INT NOT NULL,
+  selected_answer TEXT NOT NULL,
+  is_correct BOOLEAN NOT NULL,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE TABLE summaries (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+  title TEXT,
+  content TEXT NOT NULL,
+  source_url TEXT,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
 ```
-users
-- id (UUID, PK)
-- email (unique)
-- password_hash
-- created_at
 
-chat_history
-- id (UUID, PK)
-- user_id (FK → users)
-- message
-- response
-- context (optional)
-- created_at
+---
 
-quizzes
-- id (UUID, PK)
-- user_id (FK → users)
-- title
-- topic
-- difficulty (easy/medium/hard)
-- content (JSON — questions array)
-- created_at
+## Configuration
 
-quiz_answers
-- id (UUID, PK)
-- quiz_id (FK → quizzes)
-- user_id (FK → users)
-- question_index
-- selected_answer
-- is_correct
-- created_at
+### `backend/.env`
+```env
+SUPABASE_URL=https://your-project.supabase.co
+SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
+OPENROUTER_API_KEY=sk-or-...
+PORT=3001
 
-summaries
-- id (UUID, PK)
-- user_id (FK → users)
-- title
-- content
-- source_url (optional)
-- created_at
+# Optional: Email for password reset
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=587
+SMTP_USER=your@email.com
+SMTP_PASS=your-app-password
 ```
 
-## Future Enhancements
+---
 
-- OAuth login options
-- Spaced repetition for quizzes
-- Dark mode
-- Export study materials
-- Collaborative learning features
-- Mobile app version
+## Scripts
+
+| Command                     | Description                          |
+|----------------------------|--------------------------------------|
+| `pnpm dev`                 | Run backend + extension concurrently |
+| `pnpm build`               | Build all packages                   |
+| `pnpm dev:backend`         | Start backend only (`tsx watch`)     |
+| `pnpm --filter ./extension build` | Build extension only           |
+
+---
+
+## Troubleshooting
+
+- **Extension not loading?** Run `pnpm --filter ./extension build`, check `extension/dist` exists, refresh `chrome://extensions`
+- **Backend connection error?** Is `pnpm dev:backend` running on port 3001?
+- **AI not responding?** Verify `OPENROUTER_API_KEY` is set and has credits
+- **Auth fails?** Check Supabase credentials and that tables exist in the SQL Editor
+- **Port in use?** Kill the process: `npx kill-port 3001`
+
+---
 
 ## License
 

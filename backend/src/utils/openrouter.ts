@@ -87,19 +87,60 @@ export async function* streamChatResponse(
   }
 }
 
-export async function generateQuizFromContent(topic: string, difficulty: string): Promise<string> {
+export async function generateQuizFromContent(topic: string, difficulty: string, content?: string, numQuestions?: number, questionTypes?: string[]): Promise<any> {
+  console.log('[QUIZ] generateQuizFromContent called with topic:', topic, 'content length:', content?.length || 0);
   if (!OPENROUTER_API_KEY) {
     throw new Error('OPENROUTER_API_KEY is not set');
   }
 
-  const systemPrompt = `You are an expert quiz generator. Create a quiz in JSON format with exactly 5 questions about the given topic. 
-Each question should have 4 multiple choice options (A, B, C, D) and one correct answer.
-Return ONLY valid JSON, no other text.`;
+  const qTypes = questionTypes?.length ? questionTypes.join(', ') : 'multiple choice (MCQ)';
+  const qCount = numQuestions || 5;
+
+  let systemPrompt: string;
+  let userMessage: string;
+
+  if (content) {
+    systemPrompt = `You are an expert quiz generator. Create a quiz in JSON format with exactly ${qCount} questions based on the provided content.
+Question types to include: ${qTypes}.
+- For "mcq": each question must have 4 options and one correct answer.
+- For "truefalse": each question must have options ["True", "False"] and one correct answer.
+- For "essay": each question must have an empty options array and the correctAnswer should be a model answer.
+
+Return ONLY valid JSON in this exact format, no other text:
+{
+  "questions": [
+    {
+      "question": "question text here",
+      "options": ["Option A", "Option B", "Option C", "Option D"],
+      "correctAnswer": "Correct option text"
+    }
+  ]
+}`;
+    userMessage = `Generate a ${difficulty} quiz with ${qCount} questions (${qTypes}) based on the following content:\n\n${content}`;
+  } else {
+    systemPrompt = `You are an expert quiz generator. Create a quiz in JSON format with exactly ${qCount} questions about the given topic.
+Question types to include: ${qTypes}.
+- For "mcq": each question must have 4 options and one correct answer.
+- For "truefalse": each question must have options ["True", "False"] and one correct answer.
+- For "essay": each question must have an empty options array and the correctAnswer should be a model answer.
+
+Return ONLY valid JSON in this exact format, no other text:
+{
+  "questions": [
+    {
+      "question": "question text here",
+      "options": ["Option A", "Option B", "Option C", "Option D"],
+      "correctAnswer": "Correct option text"
+    }
+  ]
+}`;
+    userMessage = `Generate a ${difficulty} quiz with ${qCount} questions (${qTypes}) about: ${topic}`;
+  }
 
   const messages: ChatMessage[] = [
     {
       role: 'user',
-      content: `Generate a ${difficulty} quiz about: ${topic}`,
+      content: userMessage,
     },
   ];
 
@@ -108,11 +149,34 @@ Return ONLY valid JSON, no other text.`;
     fullResponse += chunk;
   }
 
+  let parsed: any;
+  const trimmed = fullResponse.trim();
+
   try {
-    return JSON.parse(fullResponse);
+    parsed = JSON.parse(trimmed);
   } catch {
-    return fullResponse;
+    const firstBrace = trimmed.indexOf('{');
+    const lastBrace = trimmed.lastIndexOf('}');
+    if (firstBrace !== -1 && lastBrace > firstBrace) {
+      try {
+        parsed = JSON.parse(trimmed.slice(firstBrace, lastBrace + 1));
+      } catch {}
+    }
   }
+
+  if (Array.isArray(parsed)) {
+    parsed = { questions: parsed };
+  }
+  if (parsed && parsed.questions) {
+    for (const q of parsed.questions) {
+      if (q.options && !Array.isArray(q.options)) {
+        q.options = Object.values(q.options);
+      }
+    }
+    return parsed;
+  }
+  console.error('AI raw response (first 1000 chars):', fullResponse.slice(0, 1000));
+  return { questions: [] };
 }
 
 const SUMMARY_PROMPTS: Record<string, (pageContent: string) => string> = {

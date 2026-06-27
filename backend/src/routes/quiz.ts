@@ -11,6 +11,9 @@ interface QuizRequest extends Request {
     topic?: string;
     difficulty?: string;
     title?: string;
+    content?: string;
+    numQuestions?: number;
+    questionTypes?: string[];
     quizId?: string;
     answers?: Array<{ questionIndex: number; selectedAnswer: string }>;
   };
@@ -18,22 +21,34 @@ interface QuizRequest extends Request {
 
 router.post('/generate', async (req: QuizRequest, res: Response) => {
   try {
-    const { topic, difficulty, title } = req.body;
+    const { topic, difficulty, title, content, numQuestions, questionTypes } = req.body;
     const userId = req.userId;
 
     if (!userId) {
       return res.status(401).json({ error: 'Unauthorized' });
     }
 
-    if (!topic || !difficulty) {
-      return res.status(400).json({ error: 'Topic and difficulty required' });
+    if (!difficulty) {
+      return res.status(400).json({ error: 'Difficulty required' });
+    }
+
+    if (!content && !topic) {
+      return res.status(400).json({ error: 'Topic or content required' });
     }
 
     res.setHeader('Content-Type', 'application/json');
 
     try {
-      const quizContent = await generateQuizFromContent(topic, difficulty);
+      const quizContent = await generateQuizFromContent(topic || 'Untitled', difficulty, content, numQuestions, questionTypes);
       const quizId = generateId();
+
+      console.log('=== QUIZ DEBUG ===');
+      console.log('quizContent type:', typeof quizContent);
+      console.log('quizContent keys:', quizContent ? Object.keys(quizContent) : 'null');
+      console.log('has questions?', quizContent?.questions ? 'YES count=' + quizContent.questions.length : 'NO');
+      if (quizContent?.questions?.length > 0) {
+        console.log('first question:', JSON.stringify(quizContent.questions[0]).slice(0, 200));
+      }
 
       const { error } = await supabase.from('quizzes').insert({
         id: quizId,

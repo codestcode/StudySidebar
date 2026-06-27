@@ -108,7 +108,7 @@ export const api = {
     return response.json();
   },
 
-  async generateQuiz(topic: string, difficulty: string, title?: string, numQuestions?: number, questionTypes?: string[]) {
+  async generateQuiz(topic: string, difficulty: string, title?: string, numQuestions?: number, questionTypes?: string[], content?: string) {
     const token = await storage.getToken();
     if (!token) throw new Error('Not authenticated');
 
@@ -118,7 +118,7 @@ export const api = {
         'Content-Type': 'application/json',
         Authorization: `Bearer ${token}`,
       },
-      body: JSON.stringify({ topic, difficulty, title, numQuestions, questionTypes }),
+      body: JSON.stringify({ topic, difficulty, title, numQuestions, questionTypes, content }),
     });
 
     if (!response.ok) throw new Error('Quiz generation failed');

@@ -1,6 +1,7 @@
 import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
+import rateLimit from 'express-rate-limit';
 import { supabase } from './db/client.js';
 import authRouter, { authenticateToken } from './routes/auth.js';
 import chatRouter from './routes/chat.js';
@@ -10,8 +11,18 @@ import summaryRouter from './routes/summary.js';
 const app = express();
 const PORT = process.env.PORT || 3001;
 
-app.use(express.json());
-app.use(cors());
+const apiLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 60,
+  message: { error: 'Too many requests, try again later' },
+});
+
+app.use(cors({
+  methods: ['GET', 'POST'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+}));
+app.use(express.json({ limit: '1mb' }));
+app.use('/api', apiLimiter);
 
 // Health check
 app.get('/health', (req, res) => {

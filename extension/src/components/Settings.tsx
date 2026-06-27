@@ -137,7 +137,7 @@ export function Settings({ darkMode, onToggleDarkMode }: SettingsProps) {
                   <div className="space-y-3">
                     <div className="flex items-center gap-3">
                       <Mail className="w-4 h-4 text-blue-500" />
-                      <span>support@studysidebar.app</span>
+                      <span>studysidebar@gmail.com</span>
                     </div>
                   </div>
                   <p className="text-xs text-slate-400">
