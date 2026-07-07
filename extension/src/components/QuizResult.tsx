@@ -14,17 +14,17 @@ export function QuizResult({ result, onReview, onReset }: QuizResultProps) {
   const isPassing = result.score >= 70;
 
   return (
-    <div className="flex flex-col h-full bg-slate-50">
-      <header className="flex items-center justify-between px-4 py-3 border-b border-slate-200 bg-white">
+    <div className="flex flex-col h-full bg-slate-50 dark:bg-slate-900">
+      <header className="flex items-center justify-between px-4 py-3 border-b border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800">
         <button
-          className="p-2 rounded-lg hover:bg-slate-100 transition-colors"
+          className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
           aria-label="back"
           onClick={onReset}
         >
-          <ArrowLeft className="w-5 h-5 text-slate-600" />
+          <ArrowLeft className="w-5 h-5 text-slate-600 dark:text-slate-400" />
         </button>
 
-        <h2 className="text-base font-semibold text-slate-900 font-nunito">Quiz Results</h2>
+        <h2 className="text-base font-semibold text-slate-900 dark:text-white font-nunito">Quiz Results</h2>
 
         <div className="w-9" />
       </header>
@@ -42,17 +42,17 @@ export function QuizResult({ result, onReview, onReset }: QuizResultProps) {
                 <Award className="w-6 h-6 text-white" />
               </div>
               <div>
-                <h3 className="text-lg font-semibold text-slate-900 font-nunito">
+                <h3 className="text-lg font-semibold text-slate-900 dark:text-white font-nunito">
                   {isPassing ? 'Great Job!' : 'Keep Practicing!'}
                 </h3>
-                <p className="text-xs text-slate-400 font-nunito">You completed the quiz</p>
+                <p className="text-xs text-slate-400 dark:text-slate-500 font-nunito">You completed the quiz</p>
               </div>
             </div>
 
             <div className="inline-flex items-center justify-center w-32 h-32 rounded-full bg-gradient-to-br from-blue-500 to-emerald-400 shadow-lg shadow-blue-500/20 mb-4">
               <div className="w-28 h-28 rounded-full bg-white dark:bg-slate-800 flex flex-col items-center justify-center">
-                <div className="text-2xl font-bold text-slate-900">{result.correctCount}/{result.totalQuestions}</div>
-                <div className="text-xs text-slate-400 font-nunito">Correct</div>
+                <div className="text-2xl font-bold text-slate-900 dark:text-white">{result.correctCount}/{result.totalQuestions}</div>
+                <div className="text-xs text-slate-400 dark:text-slate-500 font-nunito">Correct</div>
                 <div className={`text-xl font-bold mt-0.5 ${isPassing ? 'text-emerald-500' : 'text-amber-500'}`}>
                   {percentage}%
                 </div>
@@ -62,11 +62,11 @@ export function QuizResult({ result, onReview, onReset }: QuizResultProps) {
             <div className="flex items-center justify-center gap-6 text-sm">
               <div className="flex items-center gap-2">
                 <CheckCircle className="w-4 h-4 text-emerald-500" />
-                <span className="text-slate-600 font-nunito">{result.correctCount} correct</span>
+                <span className="text-slate-600 dark:text-slate-400 font-nunito">{result.correctCount} correct</span>
               </div>
               <div className="flex items-center gap-2">
                 <XCircle className="w-4 h-4 text-red-400" />
-                <span className="text-slate-600 font-nunito">{result.totalQuestions - result.correctCount} wrong</span>
+                <span className="text-slate-600 dark:text-slate-400 font-nunito">{result.totalQuestions - result.correctCount} wrong</span>
               </div>
             </div>
           </div>
@@ -75,7 +75,7 @@ export function QuizResult({ result, onReview, onReset }: QuizResultProps) {
             <div className="glass3d rounded-3xl p-6">
               <div className="flex items-center gap-2 mb-4">
                 <BookOpen className="w-4 h-4 text-blue-500" />
-                <h4 className="text-sm font-semibold text-slate-900 font-nunito">Review Summary</h4>
+                <h4 className="text-sm font-semibold text-slate-900 dark:text-white font-nunito">Review Summary</h4>
               </div>
               <div className="space-y-3">
                 {wrongAnswers.map((detail) => (
@@ -85,11 +85,11 @@ export function QuizResult({ result, onReview, onReset }: QuizResultProps) {
                         <XCircle className="w-4 h-4 text-red-500" />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="text-xs font-medium text-slate-900 font-nunito mb-1">Question {detail.questionIndex}</p>
-                        <p className="text-xs text-red-600 font-nunito">
+                        <p className="text-xs font-medium text-slate-900 dark:text-white font-nunito mb-1">Question {detail.questionIndex}</p>
+                        <p className="text-xs text-red-600 dark:text-red-400 font-nunito">
                           Your answer: <span className="line-through">{detail.userAnswer}</span>
                         </p>
-                        <p className="text-xs text-emerald-600 font-nunito mt-0.5">
+                        <p className="text-xs text-emerald-600 dark:text-emerald-400 font-nunito mt-0.5">
                           Correct: {detail.correctAnswer}
                         </p>
                       </div>
@@ -119,7 +119,7 @@ export function QuizResult({ result, onReview, onReset }: QuizResultProps) {
             <button
               type="button"
               onClick={onReset}
-              className="btn border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 w-full"
+              className="btn border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-600 w-full"
             >
               <RotateCcw className="w-4 h-4" />
               New Quiz

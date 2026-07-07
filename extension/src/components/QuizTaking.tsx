@@ -25,11 +25,11 @@ export function QuizTaking({
 
   if (!questions.length) {
     return (
-      <div className="flex flex-col items-center justify-center h-full p-6 bg-slate-50">
+      <div className="flex flex-col items-center justify-center h-full p-6 bg-slate-50 dark:bg-slate-900">
         <div className="glass3d rounded-3xl p-8 max-w-sm text-center">
           <AlertTriangle className="w-12 h-12 text-red-400 mx-auto mb-4" />
-          <h3 className="text-lg font-semibold text-slate-900 mb-2">No questions generated</h3>
-          <p className="text-sm text-slate-500 mb-4">The AI couldn't generate valid questions. Try different options or a different topic.</p>
+          <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-2 font-nunito">No questions generated</h3>
+          <p className="text-sm text-slate-500 dark:text-slate-400 mb-4 font-nunito">The AI couldn't generate valid questions. Try different options or a different topic.</p>
           <button type="button" onClick={onReset} className="btn btn-primary">Try Again</button>
         </div>
       </div>
@@ -41,10 +41,10 @@ export function QuizTaking({
   const isEssay = !currentQuestion?.options?.length;
 
   return (
-    <div className="flex flex-col h-full bg-slate-50">
-      <header className="flex items-center justify-between px-4 py-3 border-b border-slate-200 bg-white">
+    <div className="flex flex-col h-full bg-slate-50 dark:bg-slate-900">
+      <header className="flex items-center justify-between px-4 py-3 border-b border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800">
         <button
-          className="p-2 rounded-lg hover:bg-slate-100"
+          className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700"
           aria-label="back"
           onClick={onReset}
         >
@@ -54,7 +54,7 @@ export function QuizTaking({
         </button>
 
         <div className="flex items-center gap-2">
-          <span className="text-sm font-medium text-slate-900">
+          <span className="text-sm font-medium text-slate-900 dark:text-white font-nunito">
             Question {currentQuestionIndex + 1} / {questions.length}
           </span>
         </div>
@@ -62,19 +62,19 @@ export function QuizTaking({
         <div className="w-6" />
       </header>
 
-      <div className="px-4 py-3 bg-white border-b border-slate-200">
+      <div className="px-4 py-3 bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700">
         <div className="flex items-center gap-2 mb-2">
-          <div className="flex-1 h-1 bg-slate-200 rounded-full overflow-hidden">
+          <div className="flex-1 h-1 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
             <div className="h-full bg-blue-500 transition-all" style={{ width: `${progress}%` }} />
           </div>
-          <span className="text-xs text-slate-500">{Math.round(progress)}% complete</span>
+          <span className="text-xs text-slate-500 dark:text-slate-400 font-nunito">{Math.round(progress)}% complete</span>
         </div>
       </div>
 
       <main className="flex-1 overflow-y-auto p-4">
         <div className="flex flex-col gap-4">
           <div className="card p-4">
-            <p className="text-sm font-medium text-slate-900 mb-3">
+            <p className="text-sm font-medium text-slate-900 dark:text-white mb-3 font-nunito">
               {currentQuestion?.question || 'Loading question...'}
             </p>
           </div>
@@ -86,7 +86,7 @@ export function QuizTaking({
                 onChange={(e) => onAnswerChange(currentQuestionIndex, e.target.value)}
                 disabled={loading}
                 placeholder="Type your answer here..."
-                className="w-full min-h-[120px] p-3 rounded-xl border-2 border-slate-200 bg-white text-sm text-slate-700 placeholder:text-slate-400 focus:border-blue-500 focus:outline-none resize-y"
+                className="w-full min-h-[120px] p-3 rounded-xl border-2 border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-800 text-sm text-slate-700 dark:text-slate-300 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:border-blue-500 focus:outline-none resize-y font-nunito"
                 rows={4}
               />
             </div>
@@ -97,8 +97,8 @@ export function QuizTaking({
                   key={j}
                   className={`flex items-center gap-3 p-3 rounded-xl border-2 cursor-pointer transition-all ${
                     answers[currentQuestionIndex] === option
-                      ? 'border-blue-500 bg-blue-50'
-                      : 'border-slate-200 bg-white hover:border-slate-300'
+                      ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/30'
+                      : 'border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-800 hover:border-slate-300 dark:hover:border-slate-500'
                   }`}
                 >
                   <input
@@ -110,7 +110,7 @@ export function QuizTaking({
                     disabled={loading}
                     className="accent-blue-500"
                   />
-                  <span className="text-sm font-medium text-slate-700">{option}</span>
+                  <span className="text-sm font-medium text-slate-700 dark:text-slate-300 font-nunito">{option}</span>
                 </label>
               ))}
             </div>
@@ -118,12 +118,12 @@ export function QuizTaking({
         </div>
       </main>
 
-      <div className="flex gap-2 p-4 bg-white border-t border-slate-200">
+      <div className="flex gap-2 p-4 bg-white dark:bg-slate-800 border-t border-slate-200 dark:border-slate-700">
         <button
           type="button"
           onClick={onPrevQuestion}
           disabled={currentQuestionIndex === 0 || loading}
-          className="btn border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 flex items-center gap-2"
+          className="btn border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-600 flex items-center gap-2"
         >
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
             <path d="M15 18l-6-6 6-6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
@@ -160,7 +160,7 @@ export function QuizTaking({
       </div>
 
       {error && (
-        <div className="mx-4 mb-4 p-3 rounded-2xl bg-red-50 text-red-500 text-sm">{error}</div>
+        <div className="mx-4 mb-4 p-3 rounded-2xl bg-red-50 dark:bg-red-900/20 text-red-500 dark:text-red-400 text-sm font-nunito">{error}</div>
       )}
     </div>
   );

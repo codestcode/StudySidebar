@@ -3,7 +3,7 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { api } from '../utils/api';
 import { storage } from '../utils/storage';
-import { Send, Sparkles, User, Bot, FileText, Copy, Check, Globe, Loader2, X, ChevronDown, ChevronUp, Trash2 } from 'lucide-react';
+import { Send, Sparkles, User, Bot, Copy, Check, Globe, Loader2, X, RefreshCw, Trash2 } from 'lucide-react';
 import '../styles.css';
 
 interface ChatProps {
@@ -13,6 +13,11 @@ interface ChatProps {
 interface Message {
   role: 'user' | 'assistant';
   content: string;
+}
+
+interface PageInfo {
+  title: string;
+  url: string;
 }
 
 function CopyButton({ text, label }: { text: string; label?: string }) {
@@ -32,20 +37,20 @@ function CodeBlock({ className, children }: { className?: string; children: Reac
   const match = /language-(\w+)/.exec(className || '');
   const codeString = String(children).replace(/\n$/, '');
   return (
-    <div className="relative group my-3 rounded-xl overflow-hidden border border-slate-700/50 shadow-lg">
-      <div className="flex items-center justify-between px-4 py-2 bg-slate-800 dark:bg-slate-900 border-b border-slate-700">
+    <div className="relative group my-3 rounded-xl overflow-hidden border border-slate-200 dark:border-slate-700/50 shadow-lg">
+      <div className="flex items-center justify-between px-4 py-2 bg-slate-200 dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700">
         <div className="flex items-center gap-2">
           <div className="flex gap-1.5">
             <span className="w-2.5 h-2.5 rounded-full bg-red-500/80"></span>
             <span className="w-2.5 h-2.5 rounded-full bg-yellow-500/80"></span>
             <span className="w-2.5 h-2.5 rounded-full bg-emerald-500/80"></span>
           </div>
-          <span className="text-xs text-slate-500 font-mono ml-2">{match?.[1] || 'code'}</span>
+          <span className="text-xs text-slate-500 dark:text-slate-400 font-mono ml-2">{match?.[1] || 'code'}</span>
         </div>
         <CopyButton text={codeString} label="Copy" />
       </div>
-      <pre className="!m-0 !rounded-none !bg-slate-850 !p-4 !overflow-x-auto">
-        <code className={`!text-slate-200 !text-xs !font-mono !leading-relaxed ${className || ''}`}>{children}</code>
+      <pre className="!m-0 !rounded-none !bg-slate-100 dark:!bg-slate-900 !p-4 !overflow-x-auto !leading-relaxed">
+        <code className={`!text-slate-800 dark:!text-slate-200 !text-sm !font-mono !leading-relaxed [font-feature-settings:"liga"_0] antialiased ${className || ''}`}>{children}</code>
       </pre>
     </div>
   );
@@ -53,7 +58,7 @@ function CodeBlock({ className, children }: { className?: string; children: Reac
 
 function MarkdownMessage({ content }: { content: string }) {
   return (
-    <div className="prose prose-slate dark:prose-invert prose-sm max-w-none prose-headings:font-nunito prose-p:font-nunito prose-li:font-nunito prose-strong:font-semibold prose-code:font-mono prose-code:text-blue-600 dark:prose-code:text-blue-400 prose-code:bg-slate-100 dark:prose-code:bg-slate-600 prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded-md prose-code:text-xs prose-pre:!bg-transparent prose-pre:!p-0 prose-pre:!border-0 prose-a:text-blue-600 dark:prose-a:text-blue-400 prose-a:font-medium prose-a:no-underline hover:prose-a:underline prose-blockquote:border-l-blue-400 dark:prose-blockquote:border-l-blue-500 prose-blockquote:text-slate-600 dark:prose-blockquote:text-slate-300 prose-blockquote:bg-blue-50/50 dark:prose-blockquote:bg-blue-900/10 prose-blockquote:py-1 prose-blockquote:px-4 prose-blockquote:rounded-r-xl prose-hr:border-slate-200 dark:prose-hr:border-slate-700">
+    <div className="prose prose-slate dark:prose-invert prose-sm max-w-none prose-headings:font-nunito prose-p:font-nunito prose-li:font-nunito prose-strong:font-semibold prose-code:font-mono prose-code:text-blue-600 dark:prose-code:text-blue-400 prose-code:bg-slate-100 dark:prose-code:bg-slate-600 prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded-md prose-code:text-xs prose-a:text-blue-600 dark:prose-a:text-blue-400 prose-a:font-medium prose-a:no-underline hover:prose-a:underline prose-blockquote:border-l-blue-400 dark:prose-blockquote:border-l-blue-500 prose-blockquote:text-slate-600 dark:prose-blockquote:text-slate-300 prose-blockquote:bg-blue-50/50 dark:prose-blockquote:bg-blue-900/10 prose-blockquote:py-1 prose-blockquote:px-4 prose-blockquote:rounded-r-xl prose-hr:border-slate-200 dark:prose-hr:border-slate-700">
       <ReactMarkdown
         remarkPlugins={[remarkGfm]}
         components={{
@@ -99,18 +104,13 @@ export function Chat({ initialContext }: ChatProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [fetchingContent, setFetchingContent] = useState(false);
-  const [showContext, setShowContext] = useState(false);
+  const [currentPage, setCurrentPage] = useState<PageInfo | null>(null);
+  const [showPageChangePopup, setShowPageChangePopup] = useState(false);
+  const [pendingPage, setPendingPage] = useState<PageInfo | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const [autoScroll, setAutoScroll] = useState(true);
-
-  useEffect(() => {
-    if (initialContext) {
-      setContext(initialContext);
-      setShowContext(true);
-    }
-  }, [initialContext]);
 
   useEffect(() => {
     if (autoScroll) {
@@ -127,72 +127,35 @@ export function Chat({ initialContext }: ChatProps) {
       const local = await storage.get(['chatMessages']);
       if (local.chatMessages?.length) {
         setMessages(local.chatMessages.filter((m: Message) => m.content?.trim()));
-        return;
-      }
-      try {
-        const history = await api.getChatHistory();
-        let loaded: Message[] = [];
-        if (Array.isArray(history)) {
-          loaded = history;
-        } else if (history?.messages?.length) {
-          loaded = history.messages;
-        }
-        const filtered = loaded.filter(m => m.content?.trim());
-        setMessages(filtered);
-        if (filtered.length) {
-          await storage.set({ chatMessages: filtered });
-        }
-      } catch {
-        // No history available
-      }
-
-      if (!initialContext) {
+      } else {
         try {
-          const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
-          const tab = tabs[0];
-          if (tab?.id && tab.url && !tab.url.startsWith('chrome')) {
-            const results = await chrome.scripting.executeScript({
-              target: { tabId: tab.id },
-              func: () => {
-                const article = document.querySelector('article');
-                const main = document.querySelector('main');
-                const el = article || main || document.body;
-                if (!el) return '';
-                const clone = el.cloneNode(true) as HTMLElement;
-                clone.querySelectorAll('script, style, nav, header, footer, iframe, svg, [role="navigation"], noscript').forEach(e => e.remove());
-                const headings = clone.querySelectorAll('h1, h2, h3, h4, h5, h6');
-                headings.forEach(h => {
-                  const level = h.tagName.toLowerCase();
-                  const text = h.textContent?.trim();
-                  if (text) h.replaceWith(document.createTextNode(`\n${'#'.repeat(parseInt(level[1]))} ${text}\n`));
-                });
-                const lists = clone.querySelectorAll('ul, ol');
-                lists.forEach(list => {
-                  list.querySelectorAll('li').forEach(li => {
-                    const text = li.textContent?.trim();
-                    if (text) li.replaceWith(document.createTextNode(`\n- ${text}`));
-                  });
-                });
-                const paras = clone.querySelectorAll('p');
-                paras.forEach(p => {
-                  const text = p.textContent?.trim();
-                  if (text) p.replaceWith(document.createTextNode(`\n${text}\n`));
-                });
-                return (clone.textContent || '').replace(/\s+/g, ' ').replace(/\n\s+/g, '\n').trim().slice(0, 50000);
-              },
-            });
-            const content = results?.[0]?.result;
-            if (content) {
-              const pageTitle = tab.title || 'Untitled Page';
-              setContext(`Page: ${pageTitle}\nURL: ${tab.url}\n\n--- Page Content ---\n\n${content}`);
-              setShowContext(true);
-            }
+          const history = await api.getChatHistory();
+          let loaded: Message[] = [];
+          if (Array.isArray(history)) {
+            loaded = history;
+          } else if (history?.messages?.length) {
+            loaded = history.messages;
           }
-        } catch {
-          // Auto-fetch failed, user can click Read Page
-        }
+          const filtered = loaded.filter(m => m.content?.trim());
+          setMessages(filtered);
+          if (filtered.length) {
+            await storage.set({ chatMessages: filtered });
+          }
+        } catch {}
       }
+      await loadCurrentPage();
     })();
+  }, []);
+
+  useEffect(() => {
+    const handler = (message: any) => {
+      if (message.type === 'page-changed' && message.url) {
+        setPendingPage({ title: message.title || 'Untitled', url: message.url });
+        setShowPageChangePopup(true);
+      }
+    };
+    chrome.runtime.onMessage.addListener(handler);
+    return () => chrome.runtime.onMessage.removeListener(handler);
   }, []);
 
   useEffect(() => {
@@ -200,6 +163,16 @@ export function Chat({ initialContext }: ChatProps) {
       storage.set({ chatMessages: messages });
     }
   }, [messages]);
+
+  const loadCurrentPage = async () => {
+    try {
+      const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
+      const tab = tabs[0];
+      if (tab?.title && tab?.url) {
+        setCurrentPage({ title: tab.title, url: tab.url });
+      }
+    } catch {}
+  };
 
   const handleScroll = () => {
     const el = messagesContainerRef.current;
@@ -243,7 +216,7 @@ export function Chat({ initialContext }: ChatProps) {
     }
   };
 
-  const fetchPageContent = async () => {
+  const refreshContext = async () => {
     setFetchingContent(true);
     setError('');
     try {
@@ -255,8 +228,8 @@ export function Chat({ initialContext }: ChatProps) {
         throw new Error('Cannot read content from Chrome system pages');
       }
 
-      let content: string | null = null;
       const pageTitle = tab.title || 'Untitled Page';
+      let content: string | null = null;
 
       try {
         const response = await chrome.tabs.sendMessage(tab.id, { type: 'get-page-content' });
@@ -269,52 +242,35 @@ export function Chat({ initialContext }: ChatProps) {
             const main = document.querySelector('main');
             const el = article || main || document.body;
             if (!el) return '';
-
             const clone = el.cloneNode(true) as HTMLElement;
             clone.querySelectorAll('script, style, nav, header, footer, iframe, svg, [role="navigation"], noscript').forEach(e => e.remove());
-
             const headings = clone.querySelectorAll('h1, h2, h3, h4, h5, h6');
             headings.forEach(h => {
               const level = h.tagName.toLowerCase();
               const text = h.textContent?.trim();
-              if (text) {
-                h.replaceWith(document.createTextNode(`\n${'#'.repeat(parseInt(level[1]))} ${text}\n`));
-              }
+              if (text) h.replaceWith(document.createTextNode(`\n${'#'.repeat(parseInt(level[1]))} ${text}\n`));
             });
-
             const lists = clone.querySelectorAll('ul, ol');
             lists.forEach(list => {
-              const items = list.querySelectorAll('li');
-              items.forEach(li => {
+              list.querySelectorAll('li').forEach(li => {
                 const text = li.textContent?.trim();
-                if (text) {
-                  li.replaceWith(document.createTextNode(`\n- ${text}`));
-                }
+                if (text) li.replaceWith(document.createTextNode(`\n- ${text}`));
               });
             });
-
             const paras = clone.querySelectorAll('p');
             paras.forEach(p => {
               const text = p.textContent?.trim();
-              if (text) {
-                p.replaceWith(document.createTextNode(`\n${text}\n`));
-              }
+              if (text) p.replaceWith(document.createTextNode(`\n${text}\n`));
             });
-
-            return (clone.textContent || '')
-              .replace(/\s+/g, ' ')
-              .replace(/\n\s+/g, '\n')
-              .trim()
-              .slice(0, 50000);
+            return (clone.textContent || '').replace(/\s+/g, ' ').replace(/\n\s+/g, '\n').trim().slice(0, 50000);
           },
         });
         content = results?.[0]?.result || null;
       }
 
       if (content) {
-        const fullContext = `Page: ${pageTitle}\nURL: ${tab.url}\n\n--- Page Content ---\n\n${content}`;
-        setContext(fullContext);
-        setShowContext(true);
+        setCurrentPage({ title: pageTitle, url: tab.url });
+        setContext(`Page: ${pageTitle}\nURL: ${tab.url}\n\n--- Page Content ---\n\n${content}`);
       } else {
         throw new Error('No content found on this page');
       }
@@ -325,6 +281,24 @@ export function Chat({ initialContext }: ChatProps) {
     }
   };
 
+  const refreshForNewPage = async () => {
+    setShowPageChangePopup(false);
+    setMessages([]);
+    setContext('');
+    setError('');
+    await storage.set({ chatMessages: [] });
+    if (pendingPage) {
+      setCurrentPage(pendingPage);
+      setPendingPage(null);
+      await refreshContext();
+    }
+  };
+
+  const dismissPageChange = () => {
+    setShowPageChangePopup(false);
+    setPendingPage(null);
+  };
+
   const clearChat = () => {
     setMessages([]);
     setError('');
@@ -333,7 +307,7 @@ export function Chat({ initialContext }: ChatProps) {
   };
 
   return (
-    <div className="flex flex-col h-full gap-3 p-4">
+    <div className="flex flex-col h-full gap-3 p-4 relative">
       {error && (
         <div className="flex items-center gap-2 p-3 rounded-2xl bg-red-50 dark:bg-red-900/20 border border-red-100 dark:border-red-800 text-red-500 dark:text-red-400 text-sm">
           <span className="flex-1">{error}</span>
@@ -343,63 +317,25 @@ export function Chat({ initialContext }: ChatProps) {
         </div>
       )}
 
-      <div className="glass3d rounded-3xl">
-        <button
-          onClick={() => setShowContext(!showContext)}
-          className="w-full flex items-center justify-between px-4 py-3 text-xs font-medium text-slate-500 dark:text-slate-400 font-nunito hover:text-slate-700 dark:hover:text-slate-200 transition-colors"
-        >
-          <div className="flex items-center gap-2">
-            <FileText className="w-4 h-4" />
-            Context {context ? `(${context.length.toLocaleString()} chars)` : ''}
-          </div>
-          <div className="flex items-center gap-2">
-            {context && !showContext && (
-              <span className="w-2 h-2 rounded-full bg-emerald-400"></span>
+      {currentPage && (
+        <div className="glass3d rounded-2xl px-4 py-2.5 flex items-center gap-2">
+          <Globe className="w-4 h-4 text-blue-500 flex-shrink-0" />
+          <span className="text-xs text-slate-600 dark:text-slate-300 font-nunito truncate flex-1">{currentPage.title}</span>
+          <button
+            type="button"
+            onClick={refreshContext}
+            disabled={fetchingContent}
+            className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-xs text-slate-600 dark:text-slate-300 font-medium transition-colors disabled:opacity-50"
+          >
+            {fetchingContent ? (
+              <Loader2 className="w-3 h-3 animate-spin" />
+            ) : (
+              <RefreshCw className="w-3 h-3" />
             )}
-            {showContext ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-          </div>
-        </button>
-
-        {showContext && (
-          <div className="px-4 pb-4 border-t border-slate-100 dark:border-slate-700 pt-3">
-            <div className="flex items-center justify-between mb-2">
-              <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={fetchPageContent}
-                  disabled={fetchingContent}
-                  className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-xs text-slate-600 dark:text-slate-300 font-medium transition-colors disabled:opacity-50"
-                >
-                  {fetchingContent ? (
-                    <Loader2 className="w-3 h-3 animate-spin" />
-                  ) : (
-                    <Globe className="w-3 h-3" />
-                  )}
-                  {fetchingContent ? 'Reading...' : 'Read Page'}
-                </button>
-              </div>
-              {context && (
-                <button
-                  type="button"
-                  onClick={() => setContext('')}
-                  className="text-xs text-slate-400 hover:text-red-500 transition-colors font-nunito"
-                >
-                  Clear
-                </button>
-              )}
-            </div>
-            <div className="relative">
-              <textarea
-                value={context}
-                onChange={(e) => setContext(e.target.value)}
-                placeholder="Paste relevant material or click 'Read Page' to pull content from the current tab..."
-                disabled={loading}
-                className="w-full bg-transparent border border-slate-200 dark:border-slate-600 rounded-2xl p-3 text-sm text-slate-700 dark:text-slate-200 placeholder:text-slate-400 outline-none focus:border-blue-400 focus:ring-[3px] focus:ring-blue-100 dark:focus:ring-blue-900 resize-none transition-all h-20 font-nunito"
-              />
-            </div>
-          </div>
-        )}
-      </div>
+            {fetchingContent ? 'Loading...' : 'Refresh'}
+          </button>
+        </div>
+      )}
 
       <div
         ref={messagesContainerRef}
@@ -412,7 +348,7 @@ export function Chat({ initialContext }: ChatProps) {
               <Sparkles className="w-7 h-7 text-white" />
             </div>
             <h3 className="text-base font-semibold text-slate-700 dark:text-slate-200 font-nunito mb-1">AI Study Assistant</h3>
-             <p className="text-xs text-slate-500 dark:text-slate-400 font-nunito max-w-[240px]">
+            <p className="text-xs text-slate-500 dark:text-slate-400 font-nunito max-w-[240px]">
               Ask anything about your study material, the current page content, or any topic you're learning
             </p>
           </div>
@@ -443,7 +379,7 @@ export function Chat({ initialContext }: ChatProps) {
                     className={`${
                       msg.role === 'user'
                         ? 'bg-gradient-to-r from-blue-600 to-blue-500 text-white rounded-2xl rounded-br-lg shadow-lg shadow-blue-500/20 p-3.5'
-                        : 'glass3d text-slate-700 dark:text-slate-200 rounded-2xl rounded-bl-lg p-4'
+                        : 'glass3d text-slate-700 dark:text-slate-100 rounded-2xl rounded-bl-lg p-4 dark:font-medium'
                     }`}
                   >
                     {msg.role === 'assistant' ? (
@@ -501,6 +437,32 @@ export function Chat({ initialContext }: ChatProps) {
           <Send className="w-4 h-4" />
         </button>
       </form>
+
+      {showPageChangePopup && pendingPage && (
+        <div className="absolute inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4 animate-fade-slide-up rounded-3xl">
+          <div className="glass3d rounded-3xl p-6 max-w-sm text-center w-full">
+            <Globe className="w-12 h-12 text-blue-400 mx-auto mb-3" />
+            <h3 className="text-base font-semibold text-slate-900 dark:text-white font-nunito mb-2">New Page Detected</h3>
+            <p className="text-xs text-slate-500 dark:text-slate-400 font-nunito mb-1 truncate">{pendingPage.title}</p>
+            <p className="text-xs text-slate-400 font-nunito mb-5 truncate">{pendingPage.url}</p>
+            <p className="text-sm text-slate-600 dark:text-slate-300 font-nunito mb-5">Would you like to refresh the AI context with this page's content?</p>
+            <div className="flex gap-3">
+              <button
+                onClick={dismissPageChange}
+                className="flex-1 py-2.5 rounded-xl border border-slate-200 dark:border-slate-600 text-sm text-slate-600 dark:text-slate-300 font-medium hover:bg-slate-50 dark:hover:bg-slate-700 transition-all font-nunito"
+              >
+                Keep Current
+              </button>
+              <button
+                onClick={refreshForNewPage}
+                className="flex-1 py-2.5 rounded-xl bg-gradient-to-r from-blue-600 to-blue-500 text-white text-sm font-medium shadow-lg shadow-blue-500/25 transition-all active:scale-[0.98] font-nunito"
+              >
+                Refresh
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

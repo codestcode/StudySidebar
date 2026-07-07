@@ -51,7 +51,7 @@ export function QuizGenerate({
             </div>
             <div>
               <h2 className="text-lg font-semibold text-slate-900 dark:text-white font-nunito">Create Quiz</h2>
-              <p className="text-xs text-slate-400 font-nunito">Generate custom quizzes on any topic</p>
+              <p className="text-xs text-slate-400 dark:text-slate-500 font-nunito">Generate custom quizzes on any topic</p>
             </div>
           </div>
 
@@ -61,8 +61,8 @@ export function QuizGenerate({
               onClick={() => onGenModeChange('current-page')}
               className={`flex-1 py-2.5 text-sm font-medium rounded-xl border-2 transition-all ${
                 genMode === 'current-page'
-                  ? 'border-blue-500 bg-blue-50 text-blue-700'
-                  : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300'
+                  ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300'
+                  : 'border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:border-slate-300 dark:hover:border-slate-500'
               }`}
             >
               <span className="inline-flex items-center gap-1.5">
@@ -75,8 +75,8 @@ export function QuizGenerate({
               onClick={() => onGenModeChange('enter-topic')}
               className={`flex-1 py-2.5 text-sm font-medium rounded-xl border-2 transition-all ${
                 genMode === 'enter-topic'
-                  ? 'border-blue-500 bg-blue-50 text-blue-700'
-                  : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300'
+                  ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300'
+                  : 'border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:border-slate-300 dark:hover:border-slate-500'
               }`}
             >
               <span className="inline-flex items-center gap-1.5">
@@ -120,7 +120,7 @@ export function QuizGenerate({
               </>
             ) : (
               <div>
-                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Topic *</label>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2 font-nunito">Topic *</label>
                 <input
                   type="text"
                   value={topic}
@@ -134,13 +134,13 @@ export function QuizGenerate({
             )}
 
             <div>
-              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Number of Questions</label>
+              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2 font-nunito">Number of Questions</label>
               <div className="flex items-center gap-2 mb-3">
                 <button
                   type="button"
                   onClick={() => onNumQuestionsChange(Math.max(1, numQuestions - 1))}
                   disabled={loading || numQuestions <= 1}
-                  className="w-8 h-8 flex items-center justify-center rounded-lg border border-slate-200 hover:bg-slate-50 text-slate-600 disabled:opacity-40"
+                  className="w-8 h-8 flex items-center justify-center rounded-lg border border-slate-200 dark:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-400 disabled:opacity-40"
                 >
                   −
                 </button>
@@ -149,14 +149,14 @@ export function QuizGenerate({
                   value={numQuestions}
                   onChange={(e) => onNumQuestionsChange(Math.max(1, parseInt(e.target.value) || 1))}
                   disabled={loading}
-                  className="w-14 h-8 text-center border border-slate-200 rounded-lg text-sm"
+                  className="w-14 h-8 text-center border border-slate-200 dark:border-slate-600 rounded-lg text-sm bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300"
                   min="1"
                 />
                 <button
                   type="button"
                   onClick={() => onNumQuestionsChange(numQuestions + 1)}
                   disabled={loading}
-                  className="w-8 h-8 flex items-center justify-center rounded-lg border border-slate-200 hover:bg-slate-50 text-slate-600 disabled:opacity-40"
+                  className="w-8 h-8 flex items-center justify-center rounded-lg border border-slate-200 dark:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-400 disabled:opacity-40"
                 >
                   +
                 </button>
@@ -171,7 +171,7 @@ export function QuizGenerate({
                     className={`w-10 h-8 text-xs rounded-lg border transition-colors ${
                       numQuestions === n
                         ? 'bg-blue-500 text-white border-blue-500'
-                        : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300'
+                        : 'border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:border-slate-300 dark:hover:border-slate-500'
                     }`}
                   >
                     {n}
@@ -181,7 +181,7 @@ export function QuizGenerate({
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Difficulty level</label>
+              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2 font-nunito">Difficulty level</label>
               <div className="flex gap-2">
                 {(['easy', 'medium', 'hard'] as const).map((level) => (
                   <label
@@ -193,7 +193,7 @@ export function QuizGenerate({
                           : level === 'medium'
                           ? 'border-blue-500 bg-blue-50 text-blue-700'
                           : 'border-red-500 bg-red-50 text-red-700'
-                        : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300'
+                        : 'border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:border-slate-300 dark:hover:border-slate-500'
                     }`}
                   >
                     <input
@@ -212,14 +212,14 @@ export function QuizGenerate({
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Question Type</label>
+              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2 font-nunito">Question Type</label>
               <div className="space-y-2">
                 {[
                   { id: 'mcq', label: 'Multiple Choice (MCQ)' },
                   { id: 'truefalse', label: 'True / False' },
                   { id: 'essay', label: 'Essay (Short Answer)' },
                 ].map((type) => (
-                  <label key={type.id} className="flex items-center gap-3 p-3 rounded-xl border-2 border-slate-200 bg-white cursor-pointer hover:border-slate-300 transition-colors">
+                  <label key={type.id} className="flex items-center gap-3 p-3 rounded-xl border-2 border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-800 cursor-pointer hover:border-slate-300 dark:hover:border-slate-500 transition-colors">
                     <input
                       type="checkbox"
                       checked={questionTypes.has(type.id)}
@@ -232,7 +232,7 @@ export function QuizGenerate({
                       disabled={loading}
                       className="accent-blue-500 w-4 h-4"
                     />
-                    <span className="text-sm text-slate-700">{type.label}</span>
+                    <span className="text-sm text-slate-700 dark:text-slate-300 font-nunito">{type.label}</span>
                   </label>
                 ))}
               </div>

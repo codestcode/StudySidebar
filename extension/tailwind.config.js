@@ -21,6 +21,13 @@ export default {
         '2xl': '1rem',
         '3xl': '1.5rem',
       },
+      typography: {
+        DEFAULT: {
+          css: {
+            fontFamily: ['Nunito', 'system-ui', 'sans-serif'],
+          },
+        },
+      },
     },
   },
   plugins: [require('@tailwindcss/typography')],
