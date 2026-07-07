@@ -24,11 +24,11 @@ export function LoginForm({
 }: LoginFormProps) {
   return (
     <div className="w-full max-w-sm glass3d rounded-3xl p-8 animate-fade-slide-up">
-      <img src="https://res.cloudinary.com/dgsorkijt/image/upload/v1782497606/logostudy_bg6rv9.png" alt="StudySidebar" className="w-36 h-36 mx-auto mb-3 rounded-3xl" />
+      <img src="https://res.cloudinary.com/dgsorkijt/image/upload/v1783464326/eduspark_namczy.png" alt="EduSpark" className="w-36 h-36 mx-auto mb-3 rounded-3xl" />
       <div className="flex flex-col items-center mb-7">
         <h1 className="text-xl font-bold font-nunito tracking-tight">
-          <span className="text-blue-600">Study</span>
-          <span className="text-emerald-500">Sidebar</span>
+          <span className="text-blue-600">Edu</span>
+          <span className="text-emerald-500">Spark</span>
         </h1>
         <p className="text-slate-400 text-sm font-nunito text-center">Welcome back</p>
       </div>

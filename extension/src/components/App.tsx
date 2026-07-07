@@ -65,12 +65,12 @@ export function App() {
       <div className="flex flex-col h-full bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800">
         <div className="flex-1 flex flex-col items-center justify-center gap-6 px-8 animate-fade-slide-up">
           <div className="w-28 h-28 rounded-3xl bg-gradient-to-br from-blue-500 to-emerald-400 flex items-center justify-center shadow-2xl shadow-blue-500/20 ring-[6px] ring-white/50 dark:ring-slate-700/50 overflow-hidden">
-             <img src="https://res.cloudinary.com/dgsorkijt/image/upload/v1782497606/logostudy_bg6rv9.png" alt="StudySidebar" className="w-full h-full object-cover" />
+             <img src="https://res.cloudinary.com/dgsorkijt/image/upload/v1783464326/eduspark_namczy.png" alt="EduSpark" className="w-full h-full object-cover" />
           </div>
           <div className="text-center">
             <h1 className="text-2xl font-bold font-nunito tracking-tight">
-              <span className="text-blue-600 dark:text-blue-400">Study</span>
-              <span className="text-emerald-500 dark:text-emerald-400">Sidebar</span>
+              <span className="text-blue-600 dark:text-blue-400">Edu</span>
+              <span className="text-emerald-500 dark:text-emerald-400">Spark</span>
             </h1>
             <p className="text-xs text-slate-400 dark:text-slate-500 font-nunito mt-1">Your AI study assistant</p>
           </div>
@@ -99,8 +99,8 @@ export function App() {
       </div>
       <header className="flex items-center justify-between px-4 py-4 border-b border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800">
         <div className="flex items-center gap-2">
-          <img src="https://res.cloudinary.com/dgsorkijt/image/upload/v1782497606/logostudy_bg6rv9.png" alt="" className="w-6 h-6" />
-          <h1 className="text-lg font-semibold text-slate-900 dark:text-white font-nunito">StudySidebar</h1>
+          <img src="https://res.cloudinary.com/dgsorkijt/image/upload/v1783464326/eduspark_namczy.png" alt="" className="w-6 h-6" />
+          <h1 className="text-lg font-semibold text-slate-900 dark:text-white font-nunito">EduSpark</h1>
         </div>
         <div className="flex items-center gap-2">
           <button

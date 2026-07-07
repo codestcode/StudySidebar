@@ -1,23 +1,23 @@
 {
   "manifest_version": 3,
-  "name": "StudySidebar",
+  "name": "EduSpark",
   "version": "1.0.0",
   "description": "AI-powered study assistant for CS students",
   "permissions": ["activeTab", "scripting", "storage"],
   "host_permissions": ["<all_urls>"],
   "action": {
     "default_popup": "src/popup.html",
-    "default_title": "StudySidebar",
+    "default_title": "EduSpark",
     "default_icon": {
-      "16": "images/Logo-vecotor.png",
-      "48": "images/Logo-vecotor.png",
-      "128": "images/Logo-vecotor.png"
+      "16": "images/eduspark.png",
+      "48": "images/eduspark.png",
+      "128": "images/eduspark.png"
     }
   },
   "icons": {
-    "16": "images/Logo-vecotor.png",
-    "48": "images/Logo-vecotor.png",
-    "128": "images/Logo-vecotor.png"
+    "16": "images/eduspark.png",
+    "48": "images/eduspark.png",
+    "128": "images/eduspark.png"
   },
   "side_panel": {
     "default_path": "src/sidepanel.html"

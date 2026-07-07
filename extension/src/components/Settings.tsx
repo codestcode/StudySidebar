@@ -75,7 +75,7 @@ export function Settings({ darkMode, onToggleDarkMode }: SettingsProps) {
               <>
                 <h2 className="text-lg font-semibold font-nunito text-slate-900 dark:text-white">About Us</h2>
                 <p className="text-sm text-slate-600 dark:text-slate-300 font-nunito leading-relaxed">
-                  StudySidebar is your intelligent study companion that lives in your browser. We help students
+                  EduSpark is your intelligent study companion that lives in your browser. We help students
                   and professionals learn more effectively by providing AI-powered summaries, quizzes, and chat
                   assistance directly from any webpage.
                 </p>
@@ -90,7 +90,7 @@ export function Settings({ darkMode, onToggleDarkMode }: SettingsProps) {
                 <h2 className="text-lg font-semibold font-nunito text-slate-900 dark:text-white">Privacy Policy</h2>
                 <div className="space-y-3 text-sm text-slate-600 dark:text-slate-300 font-nunito leading-relaxed">
                   <p>
-                    Your privacy matters to us. StudySidebar only accesses webpage content when you explicitly
+                    Your privacy matters to us. EduSpark only accesses webpage content when you explicitly
                     activate it. We do not sell, share, or misuse your personal data.
                   </p>
                   <p>
