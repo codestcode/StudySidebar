@@ -11,6 +11,7 @@ interface NotesRequest extends Request {
     pageContent?: string;
     pageTitle?: string;
     pageUrl?: string;
+    style?: string;
     notesJson?: any;
   };
   params: {
@@ -21,7 +22,7 @@ interface NotesRequest extends Request {
 
 router.post('/generate', async (req: NotesRequest, res: Response) => {
   try {
-    const { pageContent, pageTitle, pageUrl } = req.body;
+    const { pageContent, pageTitle, pageUrl, style } = req.body;
     const userId = req.userId;
 
     if (!userId) {
@@ -32,7 +33,7 @@ router.post('/generate', async (req: NotesRequest, res: Response) => {
       return res.status(400).json({ error: 'Page content required' });
     }
 
-    const notesData = await generateCornellNotes(pageContent, pageTitle, pageUrl);
+    const notesData = await generateCornellNotes(pageContent, pageTitle, pageUrl, style);
 
     const noteId = generateId();
     const { error } = await supabase.from('notes').insert({

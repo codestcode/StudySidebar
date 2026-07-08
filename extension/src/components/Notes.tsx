@@ -1,47 +1,11 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { api } from '../utils/api';
-import { Sparkles, FileText, RotateCcw, Check, Copy, Globe, Loader2, AlertTriangle, Bookmark, Download, Pencil, CheckCircle2, Star, StickyNote, Lightbulb, Quote, Hash } from 'lucide-react';
+import { Sparkles, FileText, RotateCcw, Check, Globe, Loader2, AlertTriangle, Bookmark, Download, Quote, Layers } from 'lucide-react';
 import '../styles.css';
-
-interface NoteRow {
-  id: string;
-  cue: string;
-  note: string;
-  importance: 'high' | 'medium' | 'low';
-}
-
-interface NotesData {
-  title: string;
-  rows: NoteRow[];
-  summary: string;
-}
-
-const importanceConfig = {
-  high: {
-    label: 'Key Concept',
-    badgeClass: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300 border-amber-200 dark:border-amber-700',
-    dotClass: 'bg-amber-500',
-    icon: Star,
-    borderClass: 'border-l-amber-400 dark:border-l-amber-500',
-    headerClass: 'text-amber-700 dark:text-amber-300',
-  },
-  medium: {
-    label: 'Supporting',
-    badgeClass: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300 border-blue-200 dark:border-blue-700',
-    dotClass: 'bg-blue-400',
-    icon: Lightbulb,
-    borderClass: 'border-l-blue-400 dark:border-l-blue-500',
-    headerClass: 'text-blue-700 dark:text-blue-300',
-  },
-  low: {
-    label: 'Detail',
-    badgeClass: 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400 border-slate-200 dark:border-slate-600',
-    dotClass: 'bg-slate-300 dark:bg-slate-600',
-    icon: StickyNote,
-    borderClass: 'border-l-slate-300 dark:border-l-slate-600',
-    headerClass: 'text-slate-600 dark:text-slate-400',
-  },
-};
+import { type NotesData, type NotesStyle, styleOptions } from './NotesShared';
+import { CornellView } from './NotesCornell';
+import { MindMapView } from './NotesMindMap';
+import { FlashCardsView } from './NotesFlashCards';
 
 export function Notes() {
   const [pageContent, setPageContent] = useState('');
@@ -50,16 +14,18 @@ export function Notes() {
   const [readingPage, setReadingPage] = useState(false);
   const [pageRead, setPageRead] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [regenerating, setRegenerating] = useState(false);
   const [error, setError] = useState('');
   const [notesData, setNotesData] = useState<NotesData | null>(null);
   const [notesId, setNotesId] = useState<string | null>(null);
   const [hasExistingNotes, setHasExistingNotes] = useState(false);
+  const [notesStyle, setNotesStyle] = useState<NotesStyle>('cornell');
+  const [showStyleDropdown, setShowStyleDropdown] = useState(false);
   const [copied, setCopied] = useState(false);
   const [editingRow, setEditingRow] = useState<{ id: string; field: 'cue' | 'note' } | null>(null);
   const [editValue, setEditValue] = useState('');
   const [showRegenerateConfirm, setShowRegenerateConfirm] = useState(false);
   const [savedIndicator, setSavedIndicator] = useState<string | null>(null);
-  const [exported, setExported] = useState(false);
   const notesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -142,7 +108,7 @@ export function Notes() {
     setHasExistingNotes(false);
 
     try {
-      const result = await api.generateNotes(pageContent, pageTitle, pageUrl);
+      const result = await api.generateNotes(pageContent, pageTitle, pageUrl, notesStyle);
       if (result.notes) {
         setNotesData(result.notes);
         setNotesId(result.id);
@@ -159,6 +125,27 @@ export function Notes() {
       setShowRegenerateConfirm(true);
     } else {
       handleGenerate();
+    }
+  };
+
+  const handleRegenerateWithStyle = async (newStyle: NotesStyle) => {
+    if (!pageContent.trim()) return;
+    setNotesStyle(newStyle);
+
+    if (notesData) {
+      setRegenerating(true);
+      setError('');
+      try {
+        const result = await api.generateNotes(pageContent, pageTitle, pageUrl, newStyle);
+        if (result.notes) {
+          setNotesData(result.notes);
+          setNotesId(result.id);
+        }
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Notes generation failed');
+      } finally {
+        setRegenerating(false);
+      }
     }
   };
 
@@ -206,6 +193,13 @@ export function Notes() {
     return () => document.removeEventListener('keydown', handleKeyDown);
   }, [editingRow]);
 
+  useEffect(() => {
+    if (!showStyleDropdown) return;
+    const handleClick = () => setShowStyleDropdown(false);
+    document.addEventListener('click', handleClick);
+    return () => document.removeEventListener('click', handleClick);
+  }, [showStyleDropdown]);
+
   const handleExport = () => {
     if (!notesData) return;
 
@@ -244,7 +238,7 @@ export function Notes() {
               </div>
               <div>
                 <h2 className="text-lg font-semibold text-slate-900 dark:text-white font-nunito">Smart Notes</h2>
-                <p className="text-xs text-slate-400 font-nunito">AI-powered Cornell-style study notes</p>
+                <p className="text-xs text-slate-400 font-nunito">AI-powered study notes</p>
               </div>
             </div>
             <div className="flex items-center gap-3 p-4 rounded-2xl bg-slate-50 dark:bg-slate-700/50 border border-slate-200 dark:border-slate-600">
@@ -279,7 +273,7 @@ export function Notes() {
               </div>
               <div>
                 <h2 className="text-lg font-semibold text-slate-900 dark:text-white font-nunito">Smart Notes</h2>
-                <p className="text-xs text-slate-400 font-nunito">AI-powered Cornell-style study notes</p>
+                <p className="text-xs text-slate-400 font-nunito">AI-powered study notes in multiple styles</p>
               </div>
             </div>
 
@@ -295,14 +289,24 @@ export function Notes() {
               </div>
             )}
 
-            <div className="text-center py-6">
-              <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-500 to-emerald-400 flex items-center justify-center mx-auto mb-4 shadow-2xl shadow-blue-500/20">
-                <Bookmark className="w-8 h-8 text-white" />
+            <div className="mb-6">
+              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-3">Notes Style</label>
+              <div className="style-selector">
+                {styleOptions.map((option) => (
+                  <button
+                    key={option.id}
+                    onClick={() => setNotesStyle(option.id)}
+                    className={`style-option ${notesStyle === option.id ? 'active' : ''}`}
+                  >
+                    <img src={chrome.runtime.getURL(option.iconImg)} alt={option.label} className="style-option-icon" />
+                    <span className="style-option-label">{option.label}</span>
+                    <span className="text-[8px] text-slate-400 dark:text-slate-500 leading-tight">{option.desc}</span>
+                  </button>
+                ))}
               </div>
-              <h3 className="text-base font-semibold text-slate-900 dark:text-white font-nunito mb-2">Generate Study Notes</h3>
-              <p className="text-xs text-slate-500 dark:text-slate-400 font-nunito max-w-[260px] mx-auto mb-6 leading-relaxed">
-                Cornell-style notes break down content into cues (keywords/questions), notes (explanations), and a review summary &mdash; perfect for active recall studying.
-              </p>
+            </div>
+
+            <div className="text-center py-2">
               <button
                 onClick={handleGenerate}
                 disabled={loading || !pageContent}
@@ -343,7 +347,15 @@ export function Notes() {
         )}
 
         {(notesData?.rows?.length > 0) && (
-          <div className="glass3d rounded-3xl overflow-hidden animate-fade-slide-up">
+          <div className="glass3d rounded-3xl overflow-hidden animate-fade-slide-up relative">
+            {regenerating && (
+              <div className="absolute inset-0 z-30 bg-white/60 dark:bg-slate-900/60 backdrop-blur-[2px] flex items-center justify-center">
+                <div className="flex flex-col items-center gap-3">
+                  <span className="w-8 h-8 border-[3px] border-slate-200 dark:border-slate-600 border-t-blue-500 rounded-full animate-spin"></span>
+                  <p className="text-sm font-medium text-slate-500 dark:text-slate-400">Regenerating in new style...</p>
+                </div>
+              </div>
+            )}
             <div className="px-6 py-4 border-b border-slate-200 dark:border-slate-700">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3 min-w-0">
@@ -351,7 +363,7 @@ export function Notes() {
                     <Bookmark className="w-[18px] h-[18px] text-white" />
                   </div>
                   <div className="min-w-0">
-                    <h3 className="text-sm font-bold text-slate-900 dark:text-white font-nunito truncate">{notesData.title || 'Cornell Notes'}</h3>
+                    <h3 className="text-sm font-bold text-slate-900 dark:text-white font-nunito truncate">{notesData.title || 'Study Notes'}</h3>
                     <div className="flex items-center gap-2 mt-0.5">
                       <span className="text-[10px] text-slate-400 font-nunito">{notesData.rows.length} cues</span>
                       <span className="text-[10px] text-slate-300 dark:text-slate-600">|</span>
@@ -359,10 +371,53 @@ export function Notes() {
                         <span className="w-1.5 h-1.5 rounded-full bg-amber-500 inline-block" />
                         {notesData.rows.filter(r => r.importance === 'high').length} key
                       </span>
+                      <span className="text-[10px] text-slate-300 dark:text-slate-600">|</span>
+                      <span className="text-[10px] uppercase tracking-wider font-medium text-slate-400 bg-slate-100 dark:bg-slate-700 px-1.5 py-0.5 rounded flex items-center gap-1">
+                        <img src={chrome.runtime.getURL(styleOptions.find(o => o.id === notesStyle)?.iconImg || '')} alt="" className="w-3 h-3 inline-block" />
+                        {styleOptions.find(o => o.id === notesStyle)?.label}
+                      </span>
                     </div>
                   </div>
                 </div>
                 <div className="flex items-center gap-1.5 flex-shrink-0">
+                  <div className="relative">
+                    <button
+                      type="button"
+                      onClick={(e) => { e.stopPropagation(); setShowStyleDropdown((prev) => !prev); }}
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-xs text-slate-600 dark:text-slate-300 font-medium transition-colors"
+                    >
+                      <Layers className="w-3.5 h-3.5" />
+                      <span className="hidden sm:inline">Style</span>
+                    </button>
+                    {showStyleDropdown && (
+                      <div className="absolute right-0 top-full mt-1 bg-white dark:bg-slate-800 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-700 p-2 z-20 min-w-[160px]">
+                        {styleOptions.map((opt) => {
+                          const isActive = notesStyle === opt.id;
+                          return (
+                            <button
+                              key={opt.id}
+                              onClick={() => {
+                                setShowStyleDropdown(false);
+                                if (!isActive && notesData) {
+                                  handleRegenerateWithStyle(opt.id);
+                                } else {
+                                  setNotesStyle(opt.id);
+                                }
+                              }}
+                              className={`w-full flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-medium transition-colors ${
+                                isActive
+                                  ? 'bg-blue-50 text-blue-600 dark:bg-blue-900/20 dark:text-blue-400'
+                                  : 'text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700'
+                              }`}
+                            >
+                              <img src={chrome.runtime.getURL(opt.iconImg)} alt="" className="w-4 h-4" />
+                              <span>{opt.label}</span>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
                   <button
                     type="button"
                     onClick={handleRegenerateClick}
@@ -391,93 +446,27 @@ export function Notes() {
               </div>
             )}
 
-            <div className="cornell-header-row hidden md:flex px-6 py-2 bg-slate-50/80 dark:bg-slate-800/40 border-b border-slate-100 dark:border-slate-700/50 text-[10px] uppercase tracking-wider font-bold text-slate-400 dark:text-slate-500 font-nunito">
-              <div className="w-[32%] flex-shrink-0">Cue Column</div>
-              <div className="w-[4%] flex-shrink-0 text-center">|</div>
-              <div className="flex-1 pl-4">Notes Column</div>
-            </div>
+            {notesStyle === 'cornell' && (
+              <CornellView
+                data={notesData}
+                editingRow={editingRow}
+                editValue={editValue}
+                savedIndicator={savedIndicator}
+                startEditing={startEditing}
+                saveEdit={saveEdit}
+                setEditValue={setEditValue}
+              />
+            )}
 
-            <div className="divide-y divide-slate-100 dark:divide-slate-700/50">
-              {notesData.rows.map((row, index) => {
-                const config = importanceConfig[row.importance] || importanceConfig.low;
-                const ImportanceIcon = config.icon;
-                return (
-                  <div
-                    key={row.id}
-                    className={`cornell-row ${config.borderClass} hover:bg-slate-50/60 dark:hover:bg-slate-800/20 transition-all duration-150`}
-                    style={{ animationDelay: `${index * 30}ms` }}
-                  >
-                    <div className="cornell-cue-column">
-                      <div className="flex items-start gap-2">
-                        <span className="text-[10px] text-slate-300 dark:text-slate-600 font-mono font-medium mt-1 flex-shrink-0 w-4">
-                          <Hash className="w-3 h-3 inline" />
-                        </span>
-                        <div className="flex-1 min-w-0">
-                          {editingRow?.id === row.id && editingRow?.field === 'cue' ? (
-                            <textarea
-                              value={editValue}
-                              onChange={(e) => setEditValue(e.target.value)}
-                              onBlur={saveEdit}
-                              autoFocus
-                              className="w-full text-sm font-bold text-slate-900 dark:text-white font-nunito bg-white dark:bg-slate-700 rounded-lg px-2 py-1.5 resize-none outline-none ring-2 ring-amber-400 dark:ring-amber-500 leading-snug"
-                              rows={2}
-                            />
-                          ) : (
-                            <div
-                              onClick={() => startEditing(row.id, 'cue', row.cue)}
-                              className="text-sm font-bold text-slate-900 dark:text-white font-nunito leading-snug cursor-pointer hover:text-amber-600 dark:hover:text-amber-400 transition-colors group"
-                            >
-                              {row.cue}
-                              <Pencil className="w-3 h-3 inline-block ml-1 text-slate-300 dark:text-slate-600 opacity-0 group-hover:opacity-100 transition-opacity" />
-                              {savedIndicator === row.id && editingRow?.field === 'cue' && (
-                                <CheckCircle2 className="w-3.5 h-3.5 inline-block ml-1 text-emerald-500 animate-fade-slide-up align-text-bottom" />
-                              )}
-                            </div>
-                          )}
+            {notesStyle === 'mindmap' && (
+              <MindMapView data={notesData} title={pageTitle} />
+            )}
 
-                          <div className="flex items-center gap-1.5 mt-2">
-                            <ImportanceIcon className={`w-3 h-3 ${row.importance === 'high' ? 'text-amber-500' : row.importance === 'medium' ? 'text-blue-400' : 'text-slate-400 dark:text-slate-500'}`} />
-                            <span className={`text-[9px] uppercase tracking-wider font-semibold px-1.5 py-0.5 rounded-full border ${config.badgeClass}`}>
-                              {config.label}
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
+            {notesStyle === 'flashcards' && (
+              <FlashCardsView data={notesData} title={pageTitle} />
+            )}
 
-                    <div className="cornell-divider-column">
-                      <div className="cornell-divider" />
-                    </div>
-
-                    <div className="cornell-note-column">
-                      {editingRow?.id === row.id && editingRow?.field === 'note' ? (
-                        <textarea
-                          value={editValue}
-                          onChange={(e) => setEditValue(e.target.value)}
-                          onBlur={saveEdit}
-                          autoFocus
-                          className="w-full text-sm text-slate-700 dark:text-slate-200 font-nunito leading-relaxed bg-white dark:bg-slate-700 rounded-lg px-3 py-2 resize-none outline-none ring-2 ring-amber-400 dark:ring-amber-500"
-                          rows={4}
-                        />
-                      ) : (
-                        <div
-                          onClick={() => startEditing(row.id, 'note', row.note)}
-                          className="text-sm text-slate-700 dark:text-slate-200 font-nunito leading-relaxed cursor-pointer hover:text-slate-900 dark:hover:text-white transition-colors group whitespace-pre-wrap"
-                        >
-                          {row.note}
-                          <Pencil className="w-3 h-3 inline-block ml-1.5 text-slate-300 dark:text-slate-600 opacity-0 group-hover:opacity-100 transition-opacity" />
-                          {savedIndicator === row.id && editingRow?.field === 'note' && (
-                            <CheckCircle2 className="w-3.5 h-3.5 inline-block ml-1 text-emerald-500 animate-fade-slide-up align-text-bottom" />
-                          )}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-
-            {notesData.summary && (
+            {notesData.summary && notesStyle !== 'flashcards' && (
               <div className="border-t border-slate-200 dark:border-slate-700">
                 <div className="mx-5 my-4 p-5 rounded-2xl bg-gradient-to-br from-blue-50 to-indigo-50/50 dark:from-blue-900/15 dark:to-indigo-900/10 border border-blue-100 dark:border-blue-800/30">
                   <div className="flex items-center gap-2 mb-3">
@@ -497,6 +486,20 @@ export function Notes() {
                 </div>
               </div>
             )}
+
+            <div className="border-t border-slate-200 dark:border-slate-700">
+              <div className="flex justify-center px-5 py-4">
+                <button
+                  type="button"
+                  onClick={handleRegenerateClick}
+                  disabled={loading}
+                  className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-xs text-slate-600 dark:text-slate-300 font-medium transition-colors disabled:opacity-50"
+                >
+                  <RotateCcw className="w-3.5 h-3.5" />
+                  Regenerate Notes
+                </button>
+              </div>
+            </div>
 
             <div ref={notesEndRef} />
           </div>

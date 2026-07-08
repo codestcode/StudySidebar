@@ -210,7 +210,7 @@ export const api = {
     return response.json();
   },
 
-  async generateNotes(pageContent: string, pageTitle?: string, pageUrl?: string) {
+  async generateNotes(pageContent: string, pageTitle?: string, pageUrl?: string, style?: string) {
     const token = await storage.getToken();
     if (!token) throw new Error('Not authenticated');
 
@@ -220,7 +220,7 @@ export const api = {
         'Content-Type': 'application/json',
         Authorization: `Bearer ${token}`,
       },
-      body: JSON.stringify({ pageContent, pageTitle, pageUrl }),
+      body: JSON.stringify({ pageContent, pageTitle, pageUrl, style }),
     });
 
     if (!response.ok) throw new Error('Notes generation failed');

@@ -237,6 +237,539 @@
   }
 }
 
+/* Mind Map Styles - Tree Layout */
+.mindmap-container {
+  padding: 28px 12px 20px;
+  overflow-x: auto;
+}
+
+.mindmap-root {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.mindmap-root-node {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 20px;
+  border-radius: 16px;
+  background: linear-gradient(135deg, #3B82F6, #10B981);
+  color: white;
+  font-weight: 700;
+  font-size: 14px;
+  box-shadow: 0 4px 20px rgba(59, 130, 246, 0.3);
+  position: relative;
+  z-index: 2;
+  max-width: 260px;
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.mindmap-branches {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  padding: 0 4px;
+  position: relative;
+  margin-top: 32px;
+  flex-wrap: nowrap;
+  min-width: max-content;
+  width: 100%;
+}
+
+.mindmap-branch {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+  flex: 0 0 auto;
+  width: 130px;
+  padding: 0 4px;
+}
+
+.mindmap-branch-line {
+  width: 2px;
+  height: 24px;
+  background: linear-gradient(to bottom, #94A3B8, #CBD5E1);
+  flex-shrink: 0;
+}
+
+.dark .mindmap-branch-line {
+  background: linear-gradient(to bottom, #475569, #334155);
+}
+
+.mindmap-node {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 8px 10px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 600;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  position: relative;
+  z-index: 2;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  width: 100%;
+  min-height: 36px;
+  line-height: 1.2;
+  animation: fadeSlideUp 0.3s ease-out both;
+}
+
+.mindmap-node:hover {
+  transform: scale(1.04);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+}
+
+.mindmap-node-high {
+  background: linear-gradient(135deg, #F59E0B, #D97706);
+  color: white;
+}
+
+.mindmap-node-medium {
+  background: linear-gradient(135deg, #3B82F6, #2563EB);
+  color: white;
+}
+
+.mindmap-node-low {
+  background: linear-gradient(135deg, #94A3B8, #64748B);
+  color: white;
+}
+
+.dark .mindmap-node-high {
+  background: linear-gradient(135deg, #D97706, #B45309);
+}
+
+.dark .mindmap-node-medium {
+  background: linear-gradient(135deg, #2563EB, #1D4ED8);
+}
+
+.dark .mindmap-node-low {
+  background: linear-gradient(135deg, #64748B, #475569);
+}
+
+.mindmap-node-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+.mindmap-detail {
+  display: none;
+  width: 220px;
+  padding: 12px;
+  background: white;
+  border-radius: 14px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+  z-index: 10;
+  font-size: 11px;
+  line-height: 1.5;
+  color: #334155;
+  text-align: left;
+  font-weight: 400;
+  border: 1px solid rgb(226 232 240);
+  margin-top: 8px;
+  flex-shrink: 0;
+}
+
+.dark .mindmap-detail {
+  background: #1E293B;
+  color: #CBD5E1;
+  border-color: rgb(51 65 85);
+}
+
+.mindmap-detail-visible {
+  display: block;
+}
+
+.mindmap-note-text {
+  white-space: pre-wrap;
+}
+
+.mindmap-detail code {
+  background: #F1F5F9;
+  padding: 1px 6px;
+  border-radius: 4px;
+  font-size: 10px;
+  font-family: 'JetBrains Mono', 'Fira Code', monospace;
+  color: #3B82F6;
+}
+
+.dark .mindmap-detail code {
+  background: #0F172A;
+  color: #60A5FA;
+}
+
+.mindmap-detail pre {
+  background: #F1F5F9;
+  padding: 6px 8px;
+  border-radius: 8px;
+  overflow-x: auto;
+  font-size: 10px;
+  line-height: 1.4;
+  margin: 4px 0;
+}
+
+.dark .mindmap-detail pre {
+  background: #0F172A;
+}
+
+/* Flash Cards Styles */
+.flashcards-container {
+  padding: 16px 12px;
+}
+
+.flashcards-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 16px;
+}
+
+@media (max-width: 500px) {
+  .flashcards-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.flashcard {
+  perspective: 800px;
+  height: 180px;
+  cursor: pointer;
+}
+
+.flashcard-inner {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  transform-style: preserve-3d;
+}
+
+.flashcard.flipped .flashcard-inner {
+  transform: rotateY(180deg);
+}
+
+.flashcard-front,
+.flashcard-back {
+  position: absolute;
+  inset: 0;
+  backface-visibility: hidden;
+  border-radius: 16px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  word-break: break-word;
+  border: 1px solid rgb(226 232 240);
+  overflow-y: auto;
+}
+
+.dark .flashcard-front,
+.dark .flashcard-back {
+  border-color: rgb(51 65 85);
+}
+
+.flashcard-front {
+  background: linear-gradient(145deg, #FFFFFF, #F8FAFC);
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+}
+
+.dark .flashcard-front {
+  background: linear-gradient(145deg, #1E293B, #0F172A);
+}
+
+.flashcard-back {
+  background: linear-gradient(145deg, #EFF6FF, #DBEAFE);
+  transform: rotateY(180deg);
+  box-shadow: 0 2px 12px rgba(59, 130, 246, 0.1);
+}
+
+.dark .flashcard-back {
+  background: linear-gradient(145deg, #1E3A5F, #1E293B);
+}
+
+.flashcard-front-cue {
+  font-size: 13px;
+  font-weight: 700;
+  color: #0F172A;
+  line-height: 1.3;
+}
+
+.dark .flashcard-front-cue {
+  color: #F1F5F9;
+}
+
+.flashcard-front-hint {
+  font-size: 9px;
+  color: #94A3B8;
+  margin-top: 8px;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+}
+
+.flashcard-back-note {
+  font-size: 12px;
+  color: #1E40AF;
+  line-height: 1.5;
+  font-weight: 500;
+}
+
+.dark .flashcard-back-note {
+  color: #93C5FD;
+}
+
+.flashcard-back code {
+  background: rgba(59, 130, 246, 0.1);
+  padding: 1px 6px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-family: 'JetBrains Mono', 'Fira Code', monospace;
+  color: #1D4ED8;
+}
+
+.dark .flashcard-back code {
+  background: rgba(59, 130, 246, 0.15);
+  color: #60A5FA;
+}
+
+.flashcard-back pre {
+  background: rgba(59, 130, 246, 0.08);
+  padding: 8px 10px;
+  border-radius: 8px;
+  overflow-x: auto;
+  font-size: 10px;
+  line-height: 1.4;
+  margin: 6px 0;
+  text-align: left;
+  width: 100%;
+}
+
+.dark .flashcard-back pre {
+  background: rgba(15, 23, 42, 0.6);
+}
+
+.flashcard-importance {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  font-size: 7px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 6px;
+}
+
+.flashcard-count {
+  font-size: 11px;
+  color: #94A3B8;
+  text-align: center;
+  margin-bottom: 12px;
+}
+
+.flashcard-actions {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.flashcard-nav-btn {
+  padding: 6px 16px;
+  border-radius: 10px;
+  font-size: 11px;
+  font-weight: 600;
+  transition: all 0.2s;
+  border: 1px solid rgb(226 232 240);
+  background: white;
+  color: #475569;
+  cursor: pointer;
+}
+
+.dark .flashcard-nav-btn {
+  background: #1E293B;
+  border-color: rgb(51 65 85);
+  color: #CBD5E1;
+}
+
+.flashcard-nav-btn:hover {
+  background: #F1F5F9;
+  border-color: #3B82F6;
+  color: #3B82F6;
+}
+
+.dark .flashcard-nav-btn:hover {
+  background: #0F172A;
+}
+
+/* Code Block Styles for Notes */
+.note-code-block {
+  margin: 0;
+  border-radius: 10px;
+  overflow: hidden;
+  border: 1px solid rgb(226 232 240);
+}
+
+.dark .note-code-block {
+  border-color: rgb(51 65 85);
+}
+
+.note-code-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 12px;
+  background: #F1F5F9;
+  border-bottom: 1px solid rgb(226 232 240);
+}
+
+.dark .note-code-header {
+  background: #0F172A;
+  border-bottom-color: rgb(30 41 59);
+}
+
+.note-code-dots {
+  display: flex;
+  gap: 5px;
+}
+
+.note-code-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+.note-code-dot-red { background: #EF4444; }
+.note-code-dot-yellow { background: #F59E0B; }
+.note-code-dot-green { background: #10B981; }
+
+.note-code-lang {
+  font-size: 9px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #64748B;
+}
+
+.dark .note-code-lang {
+  color: #94A3B8;
+}
+
+.note-code-copy-btn {
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 9px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: #64748B;
+  transition: all 0.15s;
+}
+
+.note-code-copy-btn:hover {
+  background: rgba(59, 130, 246, 0.1);
+  color: #3B82F6;
+}
+
+.note-code-content {
+  background: #F8FAFC;
+  padding: 12px 14px;
+  overflow-x: auto;
+  font-size: 11px;
+  line-height: 1.5;
+  font-family: 'JetBrains Mono', 'Fira Code', monospace;
+  color: #334155;
+}
+
+.dark .note-code-content {
+  background: #0F172A;
+  color: #CBD5E1;
+}
+
+/* Style Selector */
+.style-selector {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.style-option {
+  flex: 1;
+  min-width: 90px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 10px 8px;
+  border-radius: 12px;
+  border: 2px solid rgb(226 232 240);
+  background: white;
+  cursor: pointer;
+  transition: all 0.2s;
+  text-align: center;
+}
+
+.dark .style-option {
+  background: #1E293B;
+  border-color: rgb(51 65 85);
+}
+
+.style-option:hover {
+  border-color: #93C5FD;
+  background: #EFF6FF;
+}
+
+.dark .style-option:hover {
+  border-color: #3B82F6;
+  background: rgba(59, 130, 246, 0.1);
+}
+
+.style-option.active {
+  border-color: #3B82F6;
+  background: #EFF6FF;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+}
+
+.dark .style-option.active {
+  background: rgba(59, 130, 246, 0.15);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.25);
+}
+
+.style-option-icon {
+  width: 24px;
+  height: 24px;
+  object-fit: contain;
+}
+
+.style-option-label {
+  font-size: 10px;
+  font-weight: 600;
+  color: #475569;
+}
+
+.dark .style-option-label {
+  color: #CBD5E1;
+}
+
+.style-option.active .style-option-label {
+  color: #3B82F6;
+}
+
+.dark .style-option.active .style-option-label {
+  color: #60A5FA;
+}
+
 @keyframes fadeSlideUp {
   from {
     opacity: 0;
