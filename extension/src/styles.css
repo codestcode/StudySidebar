@@ -746,10 +746,45 @@
   box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.25);
 }
 
+.style-option-icon-wrap {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.style-option-icon-wrap.cornell {
+  background: linear-gradient(135deg, #3B82F6, #60A5FA);
+}
+
+.style-option-icon-wrap.mindmap {
+  background: linear-gradient(135deg, #F59E0B, #FBBF24);
+}
+
+.style-option-icon-wrap.flashcards {
+  background: linear-gradient(135deg, #10B981, #34D399);
+}
+
 .style-option-icon {
-  width: 24px;
-  height: 24px;
+  width: 18px;
+  height: 18px;
   object-fit: contain;
+  filter: brightness(0) invert(1);
+}
+
+.style-option.active .style-option-icon-wrap.cornell {
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.4);
+}
+
+.style-option.active .style-option-icon-wrap.mindmap {
+  box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.4);
+}
+
+.style-option.active .style-option-icon-wrap.flashcards {
+  box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.4);
 }
 
 .style-option-label {

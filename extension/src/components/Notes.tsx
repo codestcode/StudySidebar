@@ -193,12 +193,7 @@ export function Notes() {
     return () => document.removeEventListener('keydown', handleKeyDown);
   }, [editingRow]);
 
-  useEffect(() => {
-    if (!showStyleDropdown) return;
-    const handleClick = () => setShowStyleDropdown(false);
-    document.addEventListener('click', handleClick);
-    return () => document.removeEventListener('click', handleClick);
-  }, [showStyleDropdown]);
+
 
   const handleExport = () => {
     if (!notesData) return;
@@ -298,7 +293,9 @@ export function Notes() {
                     onClick={() => setNotesStyle(option.id)}
                     className={`style-option ${notesStyle === option.id ? 'active' : ''}`}
                   >
-                    <img src={chrome.runtime.getURL(option.iconImg)} alt={option.label} className="style-option-icon" />
+                    <span className={`style-option-icon-wrap ${option.id}`}>
+                      <img src={chrome.runtime.getURL(option.iconImg)} alt={option.label} className="style-option-icon" />
+                    </span>
                     <span className="style-option-label">{option.label}</span>
                     <span className="text-[8px] text-slate-400 dark:text-slate-500 leading-tight">{option.desc}</span>
                   </button>
@@ -373,51 +370,23 @@ export function Notes() {
                       </span>
                       <span className="text-[10px] text-slate-300 dark:text-slate-600">|</span>
                       <span className="text-[10px] uppercase tracking-wider font-medium text-slate-400 bg-slate-100 dark:bg-slate-700 px-1.5 py-0.5 rounded flex items-center gap-1">
-                        <img src={chrome.runtime.getURL(styleOptions.find(o => o.id === notesStyle)?.iconImg || '')} alt="" className="w-3 h-3 inline-block" />
+                        <span className={`style-option-icon-wrap ${notesStyle} !w-4 !h-4 !rounded-[4px]`}>
+                          <img src={chrome.runtime.getURL(styleOptions.find(o => o.id === notesStyle)?.iconImg || '')} alt="" className="style-option-icon !w-2.5 !h-2.5" />
+                        </span>
                         {styleOptions.find(o => o.id === notesStyle)?.label}
                       </span>
                     </div>
                   </div>
                 </div>
                 <div className="flex items-center gap-1.5 flex-shrink-0">
-                  <div className="relative">
-                    <button
-                      type="button"
-                      onClick={(e) => { e.stopPropagation(); setShowStyleDropdown((prev) => !prev); }}
-                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-xs text-slate-600 dark:text-slate-300 font-medium transition-colors"
-                    >
-                      <Layers className="w-3.5 h-3.5" />
-                      <span className="hidden sm:inline">Style</span>
-                    </button>
-                    {showStyleDropdown && (
-                      <div className="absolute right-0 top-full mt-1 bg-white dark:bg-slate-800 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-700 p-2 z-20 min-w-[160px]">
-                        {styleOptions.map((opt) => {
-                          const isActive = notesStyle === opt.id;
-                          return (
-                            <button
-                              key={opt.id}
-                              onClick={() => {
-                                setShowStyleDropdown(false);
-                                if (!isActive && notesData) {
-                                  handleRegenerateWithStyle(opt.id);
-                                } else {
-                                  setNotesStyle(opt.id);
-                                }
-                              }}
-                              className={`w-full flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-medium transition-colors ${
-                                isActive
-                                  ? 'bg-blue-50 text-blue-600 dark:bg-blue-900/20 dark:text-blue-400'
-                                  : 'text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700'
-                              }`}
-                            >
-                              <img src={chrome.runtime.getURL(opt.iconImg)} alt="" className="w-4 h-4" />
-                              <span>{opt.label}</span>
-                            </button>
-                          );
-                        })}
-                      </div>
-                    )}
-                  </div>
+                  <button
+                    type="button"
+                    onClick={(e) => { e.stopPropagation(); setShowStyleDropdown((prev) => !prev); }}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-xs text-slate-600 dark:text-slate-300 font-medium transition-colors"
+                  >
+                    <Layers className="w-3.5 h-3.5" />
+                    <span className="hidden sm:inline">Style</span>
+                  </button>
                   <button
                     type="button"
                     onClick={handleRegenerateClick}
@@ -505,8 +474,55 @@ export function Notes() {
           </div>
         )}
 
+        {showStyleDropdown && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4" onClick={() => setShowStyleDropdown(false)}>
+            <div className="bg-white dark:bg-slate-800 rounded-3xl p-6 max-w-sm w-full shadow-2xl border border-slate-200 dark:border-slate-700" onClick={(e) => e.stopPropagation()}>
+              <h3 className="text-sm font-bold text-slate-900 dark:text-white font-nunito mb-4 text-center">Choose Notes Style</h3>
+              <div className="space-y-3">
+                {styleOptions.map((opt) => {
+                  const isActive = notesStyle === opt.id;
+                  return (
+                    <button
+                      key={opt.id}
+                      onClick={() => setNotesStyle(opt.id)}
+                      className={`w-full flex items-center gap-3 p-3 rounded-2xl border-2 transition-all ${
+                        isActive
+                          ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
+                          : 'border-slate-200 dark:border-slate-600 hover:border-slate-300 dark:hover:border-slate-500'
+                      }`}
+                    >
+                      <span className={`style-option-icon-wrap ${opt.id} !w-10 !h-10 !rounded-xl`}>
+                        <img src={chrome.runtime.getURL(opt.iconImg)} alt="" className="style-option-icon !w-5 !h-5" />
+                      </span>
+                      <div className="text-left">
+                        <div className="text-sm font-semibold text-slate-900 dark:text-white">{opt.label}</div>
+                        <div className="text-[11px] text-slate-500 dark:text-slate-400">{opt.desc}</div>
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+              <button
+                onClick={() => {
+                  setShowStyleDropdown(false);
+                  handleRegenerateWithStyle(notesStyle);
+                }}
+                disabled={regenerating}
+                className="w-full mt-4 py-3 rounded-2xl bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600 text-white text-sm font-semibold shadow-lg shadow-blue-500/25 transition-all active:scale-[0.98] disabled:opacity-50 flex items-center justify-center gap-2"
+              >
+                {regenerating ? (
+                  <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
+                ) : (
+                  <Sparkles className="w-4 h-4" />
+                )}
+                {regenerating ? 'Generating...' : 'Generate'}
+              </button>
+            </div>
+          </div>
+        )}
+
         {showRegenerateConfirm && (
-          <div className="absolute inset-0 z-40 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4 animate-fade-slide-up" style={{ position: 'fixed', inset: 0 }}>
+          <div className="fixed inset-0 z-40 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4 animate-fade-slide-up">
             <div className="bg-white dark:bg-slate-800 rounded-3xl p-6 max-w-sm text-center w-full shadow-2xl border border-slate-200 dark:border-slate-700">
               <AlertTriangle className="w-10 h-10 text-amber-500 mx-auto mb-3" />
               <h3 className="text-base font-semibold text-slate-900 dark:text-white font-nunito mb-2">Regenerate Notes?</h3>
