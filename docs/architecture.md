@@ -12,13 +12,13 @@
 │       │              │                    │             │
 │       └──────────────┴────────────────────┘             │
 │                      │                                  │
-│                 ┌────┴─────┐                            │
+│                 ┌────┬─────┐                            │
 │                 │  App.tsx │  (orchestrator)            │
 │                 └────┬─────┘                            │
-│              ┌───────┼───────────┐                      │
-│         ┌────┴──┐ ┌──┴───┐ ┌────┴─────┐                │
-│         │ Chat  │ │ Quiz │ │ Summary  │                │
-│         └───────┘ └──────┘ └──────────┘                │
+│              ┌───────┼───────┬───────────┐              │
+│         ┌────┴──┐ ┌──┴───┐ ┌┴──────┐ ┌──┴─────┐       │
+│         │ Chat  │ │ Notes│ │ Quiz  │ │Summary │       │
+│         └───────┘ └──────┘ └───────┘ └────────┘       │
 │                      │                                  │
 │              ┌───────┴────────┐                         │
 │              │  utils/api.ts  │  (HTTP client)          │
@@ -31,10 +31,10 @@
 │  │              index.ts                            │   │
 │  │  CORS · Rate Limiter · JSON Parser · Auth MW     │   │
 │  └────┬──────┬──────┬──────┬────────────────────────┘   │
-│  ┌────┴┐ ┌───┴───┐ ┌┴────┐ ┌┴────────┐                 │
-│  │Auth │ │ Chat  │ │Quiz │ │ Summary │                 │
-│  │routes│ │routes │ │routes│ │ routes  │                 │
-│  └──┬──┘ └───┬───┘ └──┬──┘ └────┬───┘                 │
+│  ┌────┴┐ ┌───┴───┐ ┌┴────┐ ┌┴────┐ ┌┴────────┐        │
+│  │Auth │ │ Chat  │ │Notes│ │Quiz │ │ Summary │        │
+│  │routes│ │routes │ │routes│ │routes│ │ routes  │        │
+│  └──┬──┘ └───┬───┘ └──┬──┘ └──┬──┘ └────┬───┘        │
 │     │        │        │         │                       │
 │  ┌──┴────────┴────────┴─────────┴──┐                   │
 │  │         utils/openrouter.ts     │  (AI client)       │
@@ -43,7 +43,7 @@
 │  ┌────────────────────────┴─────────────────────┐      │
 │  │           Supabase (PostgreSQL)               │      │
 │  │  users · sessions · otps · chat_history      │      │
-│  │  quizzes · quiz_answers · summaries            │      │
+│  │  notes · quizzes · quiz_answers · summaries   │      │
 │  └────────────────────────────────────────────────┘      │
 └──────────────────────────────────────────────────────────┘
 ```
@@ -82,7 +82,7 @@ Request → CORS → Rate Limiter → JSON Parser → Router
                                                  ↓
       ┌──────────────── Routes ────────────────┐
       │ Auth (no middleware)                    │
-      │ Chat / Quiz / Summary (auth middleware) │
+      │ Chat / Notes / Quiz / Summary (auth)    │
       └────────────────────────────────────────┘
                                                  ↓
       ┌──────────── Response ──────────────────┐
@@ -94,7 +94,7 @@ Request → CORS → Rate Limiter → JSON Parser → Router
 **AI Integration (`openrouter.ts`):**
 - All AI calls go through OpenRouter API (`openrouter/auto` model)
 - Chat and Summary use SSE streaming (yield chunks as they arrive)
-- Quiz generation is non-streaming (collects full JSON response, parses it)
+- Quiz and Notes generation are non-streaming (collect full JSON response, parse it)
 
 **Auth (`utils/auth.ts`):**
 - Custom implementation (not Supabase Auth)
@@ -117,6 +117,14 @@ User types message → api.ts POST /chat/message → SSE stream → React state 
 2. AI generates questions → parsed JSON → saved to quizzes table
 3. User answers → POST /quiz/submit → scored vs stored content
 4. Score + details returned → displayed on result/review screens
+```
+
+**Notes Flow:**
+```
+1. Extension reads page content → POST /notes/generate
+2. AI generates Cornell notes (cues + notes + summary) → saved to notes table
+3. User can inline-edit cues/notes → PATCH /notes/:id
+4. Notes persisted per-URL — auto-loaded when revisiting the same page
 ```
 
 **Summary Flow:**

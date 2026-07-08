@@ -12,7 +12,7 @@ App.tsx
 │   ├── ForgotPasswordForm.tsx
 │   ├── VerificationForm.tsx
 │   └── ResetPasswordForm.tsx
-├── Navigation (4-tab bar: Chat, Page, Quiz, Summary)
+├── Navigation (4-tab bar: Chat, Notes, Quiz, Summary)
 ├── Chat.tsx
 │   ├── ContextPanel
 │   ├── MessageList
@@ -21,6 +21,12 @@ App.tsx
 │   │   └── TypingIndicator
 │   └── ChatInput
 ├── PageContent.tsx
+├── Notes.tsx
+│   ├── GeneratePrompt (inline)
+│   ├── SkeletonLoader (inline)
+│   ├── CornellRow (inline per-row render)
+│   ├── SummaryBox (inline)
+│   └── RegenerateConfirmModal (inline)
 ├── Quiz.tsx (orchestrator)
 │   ├── QuizGenerate.tsx
 │   ├── QuizTaking.tsx
@@ -44,7 +50,7 @@ The root orchestrator. Manages auth state, tab routing, dark mode, and settings 
 **State:**
 - `user` (object | null) — authenticated user
 - `loading` (boolean) — initial loading
-- `activeTab` ('chat' | 'page' | 'quiz' | 'summary')
+- `activeTab` ('chat' | 'notes' | 'quiz' | 'summary')
 - `showSettings` (boolean)
 - `isDarkMode` (boolean)
 
@@ -203,6 +209,37 @@ AI chat interface with streaming responses.
 - Copy buttons on AI responses
 - Clear chat button
 - Chat history persistence
+
+---
+
+## Notes.tsx
+
+Cornell-style study notes generator and viewer.
+
+**State:**
+| Variable | Type | Description |
+|----------|------|-------------|
+| `notesData` | `{ title, rows, summary } \| null` | Generated notes |
+| `notesId` | `string \| null` | Database ID for persistence |
+| `loading` | boolean | AI generation in progress |
+| `readingPage` | boolean | Content extraction in progress |
+| `pageRead` | boolean | Page content successfully extracted |
+| `hasExistingNotes` | boolean | Notes already exist for this page |
+| `editingRow` | `{ id, field } \| null` | Currently edited row |
+| `showRegenerateConfirm` | boolean | Regenerate confirmation modal |
+| `error` | string | Error message |
+
+**Features:**
+- Auto-extracts page content via content script or scripting API fallback
+- Checks for existing saved notes on page load (per-URL persistence)
+- Generates Cornell notes with AI: cue column, notes column, review summary
+- **Two-column Cornell layout:** cue (keyword/question) on left, note (explanation) on right, separated by a vertical gradient divider
+- **3-tier importance:** Key Concept (amber/star), Supporting (blue/lightbulb), Detail (slate/sticky-note)
+- Inline editing of cue and note fields with auto-save to backend
+- Copy notes as Markdown table to clipboard
+- Regenerate existing notes with confirmation dialog
+- Responsive layout: stacks vertically on mobile (<640px)
+- Staggered row entrance animations
 
 ---
 

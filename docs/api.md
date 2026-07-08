@@ -317,6 +317,135 @@ Note: Response does not include the full question content — only metadata.
 
 ---
 
+## Notes (Protected)
+
+### Generate Notes
+
+Creates Cornell-style study notes from webpage content using AI.
+
+```http
+POST /notes/generate
+Authorization: Bearer <token>
+Content-Type: application/json
+
+{
+  "pageContent": "Full text from the webpage...",
+  "pageTitle": "Optional page title",
+  "pageUrl": "https://example.com/article"
+}
+```
+
+**Response `200`:**
+```json
+{
+  "id": "uuid",
+  "notes": {
+    "title": "Article Title — Study Notes",
+    "rows": [
+      {
+        "id": "unique-id-1",
+        "cue": "What is X?",
+        "note": "Concise explanation answering the cue",
+        "importance": "high"
+      },
+      {
+        "id": "unique-id-2",
+        "cue": "Key term",
+        "note": "Short definition or explanation",
+        "importance": "medium"
+      }
+    ],
+    "summary": "3-5 sentence recap of the whole page."
+  }
+}
+```
+
+**Response `400`:**
+```json
+{
+  "error": "Page content required"
+}
+```
+
+---
+
+### Update Notes
+
+Updates the notes JSON for a given note (used for inline editing).
+
+```http
+PATCH /notes/:id
+Authorization: Bearer <token>
+Content-Type: application/json
+
+{
+  "notesJson": {
+    "title": "Updated Title",
+    "rows": [...],
+    "summary": "Updated summary..."
+  }
+}
+```
+
+**Response `200`:**
+```json
+{
+  "success": true
+}
+```
+
+---
+
+### Get Notes by Page URL
+
+Returns existing notes for a specific page URL.
+
+```http
+GET /notes/page/:pageUrl
+Authorization: Bearer <token>
+```
+
+**Response `200`:**
+```json
+{
+  "id": "uuid",
+  "notes_json": { "title": "...", "rows": [...], "summary": "..." },
+  "page_title": "Article Title",
+  "page_url": "https://example.com/article",
+  "created_at": "2026-06-27T12:00:00Z",
+  "updated_at": "2026-06-27T12:30:00Z"
+}
+```
+
+Returns `null` if no notes exist for that page.
+
+---
+
+### List Notes
+
+Returns all notes for the authenticated user.
+
+```http
+GET /notes/list
+Authorization: Bearer <token>
+```
+
+**Response `200`:**
+```json
+[
+  {
+    "id": "uuid",
+    "notes_json": { "title": "...", "rows": [...], "summary": "..." },
+    "page_title": "Article Title",
+    "page_url": "https://example.com/article",
+    "created_at": "2026-06-27T12:00:00Z",
+    "updated_at": "2026-06-27T12:30:00Z"
+  }
+]
+```
+
+---
+
 ## Summary (Protected)
 
 ### Generate Summary

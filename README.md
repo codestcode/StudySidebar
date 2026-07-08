@@ -8,6 +8,16 @@ AI-powered Chrome extension that turns your browser sidebar into a full study as
 
 ## Features
 
+### Cornell Notes Generator
+- Generate structured Cornell-style study notes from any webpage
+- Two-column layout: **Cue Column** (keywords/questions) and **Notes Column** (explanations)
+- 3-tier importance labeling: Key Concept (high), Supporting (medium), Detail (low)
+- Inline editing of cues and notes with auto-save
+- Review Summary section for quick test prep
+- Export notes as Markdown table
+- Persisted per-URL — notes are saved and restored when revisiting pages
+- Regenerate or load existing notes with one click
+
 ### AI Chat Assistant
 - Stream AI responses with real-time Markdown rendering
 - Send any page's content as context for contextual Q&A
@@ -71,7 +81,7 @@ AI-powered Chrome extension that turns your browser sidebar into a full study as
 studysidebar/
 ├── backend/
 │   ├── src/
-│   │   ├── routes/           # auth.ts, chat.ts, quiz.ts, summary.ts
+│   │   ├── routes/           # auth.ts, chat.ts, note.ts, quiz.ts, summary.ts
 │   │   ├── utils/            # auth.ts, openrouter.ts, email.ts
 │   │   ├── db/client.ts      # Supabase client
 │   │   └── index.ts          # Express server
@@ -79,7 +89,7 @@ studysidebar/
 │   └── package.json
 ├── extension/
 │   ├── src/
-│   │   ├── components/       # App, Auth, Chat, Quiz*, Summary, Settings, Theme
+│   │   ├── components/       # App, Auth, Chat, Notes, Quiz*, Summary, Settings, Theme
 │   │   ├── utils/            # api.ts (backend client), storage.ts (Chrome storage)
 │   │   ├── popup.html/.tsx   # Popup entry point
 │   │   ├── sidepanel.html/.tsx # Side panel entry point
@@ -162,6 +172,10 @@ Base URL: `http://localhost:3001/api`
 | POST   | `/quiz/generate`          | Generate quiz                  |
 | POST   | `/quiz/submit`            | Submit answers and get score   |
 | GET    | `/quiz/list`              | List user's quizzes            |
+| POST   | `/notes/generate`          | Generate Cornell notes           |
+| PATCH  | `/notes/:id`               | Update notes (inline edit)     |
+| GET    | `/notes/list`              | List user's notes              |
+| GET    | `/notes/page/:pageUrl`     | Get notes for a specific page  |
 | POST   | `/summary/generate`       | Generate summary (SSE streaming) |
 | GET    | `/summary/list`           | List user's summaries          |
 
