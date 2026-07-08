@@ -146,6 +146,97 @@
     inset 0 0 0.25px 0.5px hsl(205 20% 90% / 0.01);
 }
 
+/* Cornell Notes Layout */
+.cornell-header-row {
+  display: flex;
+  align-items: center;
+}
+
+.cornell-row {
+  display: flex;
+  align-items: stretch;
+  border-left-width: 3px;
+  border-left-style: solid;
+  animation: fadeSlideUp 0.35s ease-out both;
+}
+
+.cornell-cue-column {
+  width: 32%;
+  flex-shrink: 0;
+  padding: 16px 12px 16px 16px;
+}
+
+.cornell-divider-column {
+  width: 4%;
+  flex-shrink: 0;
+  display: flex;
+  align-items: stretch;
+  justify-content: center;
+  padding: 0;
+}
+
+.cornell-divider {
+  width: 1px;
+  background: linear-gradient(
+    to bottom,
+    transparent 0%,
+    rgb(203 213 225) 8%,
+    rgb(203 213 225) 92%,
+    transparent 100%
+  );
+}
+
+.dark .cornell-divider {
+  background: linear-gradient(
+    to bottom,
+    transparent 0%,
+    rgb(51 65 85) 8%,
+    rgb(51 65 85) 92%,
+    transparent 100%
+  );
+}
+
+.cornell-note-column {
+  flex: 1;
+  min-width: 0;
+  padding: 16px 16px 16px 20px;
+}
+
+/* Mobile: stack cue and note vertically */
+@media (max-width: 640px) {
+  .cornell-row {
+    flex-direction: column;
+    border-left-width: 0;
+    border-top-width: 3px;
+    border-top-style: solid;
+    position: relative;
+    padding-left: 0;
+  }
+
+  .cornell-cue-column {
+    width: 100%;
+    padding: 14px 14px 8px 14px;
+    border-bottom: 1px dashed rgb(226 232 240);
+  }
+
+  .dark .cornell-cue-column {
+    border-bottom-color: rgb(51 65 85);
+  }
+
+  .cornell-divider-column {
+    display: none;
+  }
+
+  .cornell-note-column {
+    width: 100%;
+    padding: 8px 14px 14px 14px;
+  }
+
+  .cornell-header-row {
+    display: none !important;
+  }
+}
+
 @keyframes fadeSlideUp {
   from {
     opacity: 0;

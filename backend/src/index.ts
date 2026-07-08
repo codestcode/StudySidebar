@@ -7,6 +7,7 @@ import authRouter, { authenticateToken } from './routes/auth.js';
 import chatRouter from './routes/chat.js';
 import quizRouter from './routes/quiz.js';
 import summaryRouter from './routes/summary.js';
+import notesRouter from './routes/note.js';
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -18,7 +19,7 @@ const apiLimiter = rateLimit({
 });
 
 app.use(cors({
-  methods: ['GET', 'POST'],
+  methods: ['GET', 'POST', 'PATCH'],
   allowedHeaders: ['Content-Type', 'Authorization'],
 }));
 app.use(express.json({ limit: '1mb' }));
@@ -39,6 +40,7 @@ const requireAuth: express.RequestHandler[] = [
 app.use('/api/chat', ...requireAuth, chatRouter);
 app.use('/api/quiz', ...requireAuth, quizRouter);
 app.use('/api/summary', ...requireAuth, summaryRouter);
+app.use('/api/notes', ...requireAuth, notesRouter);
 
 async function checkDatabase() {
   try {

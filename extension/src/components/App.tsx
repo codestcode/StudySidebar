@@ -1,21 +1,22 @@
 import React, { useState, useEffect } from 'react';
-import { Settings as SettingsIcon, LogOut, BookOpen, GraduationCap, Brain, Lightbulb, Library, ScrollText } from 'lucide-react';
+import { Settings as SettingsIcon, LogOut, BookOpen, GraduationCap, Brain, Lightbulb, Library, ScrollText, AlertTriangle, X } from 'lucide-react';
 import { Auth } from './Auth';
 import { Chat } from './Chat';
 import { Quiz } from './Quiz';
 import { Summary } from './Summary';
 import { Settings } from './Settings';
-import { PageContent } from './PageContent';
+import { Notes } from './Notes';
 import { storage } from '../utils/storage';
 import '../styles.css';
 
 export function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [activeTab, setActiveTab] = useState<'chat' | 'content' | 'quiz' | 'summary'>('chat');
+  const [activeTab, setActiveTab] = useState<'chat' | 'notes' | 'quiz' | 'summary'>('chat');
   const [loading, setLoading] = useState(true);
   const [darkMode, setDarkMode] = useState(false);
   const [chatContext, setChatContext] = useState('');
   const [showSettings, setShowSettings] = useState(false);
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
 
   useEffect(() => {
     checkAuth();
@@ -50,6 +51,7 @@ export function App() {
   };
 
   const handleLogout = async () => {
+    setShowLogoutConfirm(false);
     await storage.logout();
     setIsAuthenticated(false);
     setActiveTab('chat');
@@ -111,7 +113,7 @@ export function App() {
             <SettingsIcon className="w-4 h-4 text-slate-600 dark:text-slate-300" />
           </button>
           <button
-            onClick={handleLogout}
+            onClick={() => setShowLogoutConfirm(true)}
             className="w-9 h-9 rounded-xl bg-red-50 dark:bg-red-900/20 hover:bg-red-100 dark:hover:bg-red-900/40 flex items-center justify-center transition-all active:scale-95"
             title="Logout"
           >
@@ -121,7 +123,7 @@ export function App() {
       </header>
 
       <nav className="flex bg-slate-100 dark:bg-slate-800 p-1 mx-4 mt-3 rounded-2xl gap-1">
-        {(['chat', 'content', 'quiz', 'summary'] as const).map((tab) => (
+        {(['chat', 'notes', 'quiz', 'summary'] as const).map((tab) => (
           <button
             key={tab}
             className={`flex-1 py-2.5 px-4 text-sm font-medium transition-all font-nunito rounded-xl ${
@@ -131,17 +133,45 @@ export function App() {
             }`}
             onClick={() => setActiveTab(tab)}
           >
-            {tab === 'content' ? 'Page' : tab.charAt(0).toUpperCase() + tab.slice(1)}
+            {tab === 'notes' ? 'Notes' : tab.charAt(0).toUpperCase() + tab.slice(1)}
           </button>
         ))}
       </nav>
 
       <main className="flex-1 overflow-y-auto">
         {activeTab === 'chat' && <Chat initialContext={chatContext} />}
-        {activeTab === 'content' && <PageContent onSendToChat={handleSendToChat} />}
+        {activeTab === 'notes' && <Notes />}
         {activeTab === 'quiz' && <Quiz />}
         {activeTab === 'summary' && <Summary />}
       </main>
+
+      {showLogoutConfirm && (
+        <div className="absolute inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4 animate-fade-slide-up">
+          <div className="bg-white dark:bg-slate-800 rounded-3xl p-6 max-w-sm text-center w-full shadow-2xl border border-slate-200 dark:border-slate-700">
+            <div className="w-14 h-14 rounded-2xl bg-red-50 dark:bg-red-900/20 flex items-center justify-center mx-auto mb-4">
+              <AlertTriangle className="w-7 h-7 text-red-500" />
+            </div>
+            <h3 className="text-base font-semibold text-slate-900 dark:text-white font-nunito mb-2">Leave EduSpark?</h3>
+            <p className="text-sm text-slate-500 dark:text-slate-400 font-nunito mb-6">
+              Your chat history will be cleared if you log out.
+            </p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setShowLogoutConfirm(false)}
+                className="flex-1 py-2.5 rounded-xl border border-slate-200 dark:border-slate-600 text-sm text-slate-600 dark:text-slate-300 font-medium hover:bg-slate-50 dark:hover:bg-slate-700 transition-all font-nunito"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleLogout}
+                className="flex-1 py-2.5 rounded-xl bg-gradient-to-r from-red-600 to-red-500 text-white text-sm font-medium shadow-lg shadow-red-500/25 transition-all active:scale-[0.98] font-nunito"
+              >
+                Logout
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {showSettings && (
         <div className="absolute inset-0 z-50 bg-black/20 backdrop-blur-sm animate-fade-slide-up">

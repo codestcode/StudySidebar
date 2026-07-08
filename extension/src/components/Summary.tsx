@@ -264,47 +264,68 @@ export function Summary() {
         </div>
 
         {(summary || loading) && (
-          <div className="glass3d rounded-3xl p-6 animate-fade-slide-up">
-            {loading && !summary ? (
-              <div className="flex flex-col items-center justify-center py-8 text-slate-400">
-                <span className="w-6 h-6 border-2 border-slate-200 dark:border-slate-600 border-t-blue-500 rounded-full animate-spin mb-3"></span>
-                <p className="text-sm font-nunito">Generating summary...</p>
-              </div>
-            ) : (
-              <>
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-sm font-semibold text-slate-900 dark:text-white font-nunito">Summary</h3>
-                  <div className="flex items-center gap-2">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        navigator.clipboard.writeText(summary);
-                        setCopied(true);
-                        setTimeout(() => setCopied(false), 2000);
-                      }}
-                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-xs text-slate-600 dark:text-slate-300 font-medium transition-colors"
-                    >
-                      {copied ? <Check className="w-3.5 h-3.5 text-emerald-500" /> : <Copy className="w-3.5 h-3.5" />}
-                      {copied ? 'Copied' : 'Copy'}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={handleRegenerate}
-                      disabled={loading}
-                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-xs text-slate-600 dark:text-slate-300 font-medium transition-colors disabled:opacity-50"
-                    >
-                      <RotateCcw className="w-3.5 h-3.5" />
-                      Regenerate
-                    </button>
+          <div className="glass3d rounded-3xl overflow-hidden animate-fade-slide-up">
+            <div className="px-6 py-4 border-b border-slate-200 dark:border-slate-700">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-blue-500 to-emerald-400 flex items-center justify-center shadow-lg shadow-blue-500/20">
+                    <FileText className="w-4 h-4 text-white" />
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-semibold text-slate-900 dark:text-white font-nunito">Summary</h3>
+                    <div className="flex items-center gap-2 mt-0.5">
+                      <span className="text-[10px] uppercase tracking-wider font-medium text-slate-400 dark:text-slate-500 bg-slate-100 dark:bg-slate-700 px-1.5 py-0.5 rounded">{summaryLength}</span>
+                      <span className="text-[10px] uppercase tracking-wider font-medium text-slate-400 dark:text-slate-500 bg-slate-100 dark:bg-slate-700 px-1.5 py-0.5 rounded">{summaryFormat === 'bullet' ? 'bullet' : summaryFormat === 'concept' ? 'concepts' : 'paragraph'}</span>
+                    </div>
                   </div>
                 </div>
-                <div className="prose prose-slate dark:prose-invert prose-sm max-w-none prose-headings:font-nunito prose-p:font-nunito prose-li:font-nunito prose-strong:font-semibold prose-headings:text-slate-900 dark:prose-headings:text-white prose-p:text-slate-700 dark:prose-p:text-slate-300 prose-li:text-slate-700 dark:prose-li:text-slate-300 prose-headings:mt-5 prose-headings:mb-2 prose-p:leading-relaxed prose-ul:space-y-1">
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      navigator.clipboard.writeText(summary);
+                      setCopied(true);
+                      setTimeout(() => setCopied(false), 2000);
+                    }}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-xs text-slate-600 dark:text-slate-300 font-medium transition-colors"
+                  >
+                    {copied ? <Check className="w-3.5 h-3.5 text-emerald-500" /> : <Copy className="w-3.5 h-3.5" />}
+                    {copied ? 'Copied' : 'Copy'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleRegenerate}
+                    disabled={loading}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-xs text-slate-600 dark:text-slate-300 font-medium transition-colors disabled:opacity-50"
+                  >
+                    <RotateCcw className="w-3.5 h-3.5" />
+                    Regenerate
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {pageTitle && (
+              <div className="px-6 py-2.5 border-b border-slate-100 dark:border-slate-700/50 flex items-center gap-2 bg-slate-50/50 dark:bg-slate-800/30">
+                <Globe className="w-3.5 h-3.5 text-blue-400 flex-shrink-0" />
+                <span className="text-[11px] text-slate-500 dark:text-slate-400 font-nunito truncate">{pageTitle}</span>
+              </div>
+            )}
+
+            {loading && !summary ? (
+              <div className="flex flex-col items-center justify-center py-12 text-slate-400">
+                <span className="w-8 h-8 border-[3px] border-slate-200 dark:border-slate-600 border-t-blue-500 rounded-full animate-spin mb-4"></span>
+                <p className="text-sm font-nunito text-slate-500 dark:text-slate-400">Generating summary...</p>
+              </div>
+            ) : (
+              <div className="p-6">
+                <div className="prose prose-slate dark:prose-invert prose-sm max-w-none prose-headings:font-nunito prose-p:font-nunito prose-li:font-nunito prose-strong:font-semibold prose-headings:text-slate-900 dark:prose-headings:text-white prose-p:text-slate-700 dark:prose-p:text-slate-300 prose-li:text-slate-700 dark:prose-li:text-slate-300 prose-headings:mt-6 prose-headings:mb-3 prose-headings:pb-1.5 prose-headings:border-b prose-headings:border-slate-100 dark:prose-headings:border-slate-700 prose-p:leading-relaxed prose-p:my-3 prose-ul:space-y-1.5 prose-li:my-1 prose-li:leading-relaxed prose-code:text-blue-600 dark:prose-code:text-blue-400 prose-code:bg-slate-100 dark:prose-code:bg-slate-700 prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded-md prose-code:text-xs prose-strong:text-slate-900 dark:prose-strong:text-white prose-blockquote:border-l-blue-400 dark:prose-blockquote:border-l-blue-500 prose-blockquote:text-slate-600 dark:prose-blockquote:text-slate-400 prose-blockquote:bg-blue-50/50 dark:prose-blockquote:bg-blue-900/10 prose-blockquote:py-2 prose-blockquote:px-4 prose-blockquote:rounded-r-xl prose-blockquote:my-4 prose-hr:border-slate-200 dark:prose-hr:border-slate-700">
                   <ReactMarkdown remarkPlugins={[remarkGfm]}>
                     {summary}
                   </ReactMarkdown>
                 </div>
                 <div ref={summaryEndRef} />
-              </>
+              </div>
             )}
           </div>
         )}

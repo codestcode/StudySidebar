@@ -209,4 +209,62 @@ export const api = {
     if (!response.ok) throw new Error('Failed to get summaries');
     return response.json();
   },
+
+  async generateNotes(pageContent: string, pageTitle?: string, pageUrl?: string) {
+    const token = await storage.getToken();
+    if (!token) throw new Error('Not authenticated');
+
+    const response = await fetch(`${API_BASE}/notes/generate`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ pageContent, pageTitle, pageUrl }),
+    });
+
+    if (!response.ok) throw new Error('Notes generation failed');
+    return response.json();
+  },
+
+  async updateNotes(id: string, notesJson: any) {
+    const token = await storage.getToken();
+    if (!token) throw new Error('Not authenticated');
+
+    const response = await fetch(`${API_BASE}/notes/${id}`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ notesJson }),
+    });
+
+    if (!response.ok) throw new Error('Failed to update notes');
+    return response.json();
+  },
+
+  async getNotesForPage(pageUrl: string) {
+    const token = await storage.getToken();
+    if (!token) throw new Error('Not authenticated');
+
+    const response = await fetch(`${API_BASE}/notes/page/${encodeURIComponent(pageUrl)}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+
+    if (!response.ok) throw new Error('Failed to get notes');
+    return response.json();
+  },
+
+  async getNotes() {
+    const token = await storage.getToken();
+    if (!token) throw new Error('Not authenticated');
+
+    const response = await fetch(`${API_BASE}/notes/list`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+
+    if (!response.ok) throw new Error('Failed to get notes');
+    return response.json();
+  },
 };

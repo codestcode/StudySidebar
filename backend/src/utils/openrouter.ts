@@ -281,6 +281,79 @@ Content:
 ${pageContent}`,
 };
 
+const CORNELL_SYSTEM_PROMPT = `You are a study assistant that generates Cornell-style notes from webpage content.
+
+Return ONLY valid JSON in this exact format, no other text:
+{
+  "title": "A concise title for these notes based on the page",
+  "rows": [
+    {
+      "id": "unique-id-1",
+      "cue": "Short keyword or question (e.g. 'What is X?')",
+      "note": "Concise explanation answering the cue, 1-3 short lines",
+      "importance": "high" | "medium" | "low"
+    }
+  ],
+  "summary": "3-5 sentence recap of the whole page, written as if the student is reviewing right before a test"
+}
+
+Rules:
+- Break the page into digestible chunks (roughly one idea per row — aim for 5-12 rows depending on page length)
+- Cue = a short keyword, term, or question that would trigger recall
+- Note = the actual explanation, kept tight (1-3 short lines)
+- Mark 2-3 rows as "high" importance (core concepts vs supporting detail)
+- Summary must NOT just repeat the rows — read like a final review paragraph
+- Generate unique string IDs for each row`;
+
+export async function generateCornellNotes(content: string, pageTitle?: string, pageUrl?: string): Promise<any> {
+  if (!OPENROUTER_API_KEY) {
+    throw new Error('OPENROUTER_API_KEY is not set');
+  }
+
+  const userMessage = `Generate Cornell-style study notes from the following page content.
+
+Page title: ${pageTitle || 'Untitled'}
+Page URL: ${pageUrl || 'Unknown'}
+
+Content:
+${content}`;
+
+  const messages: ChatMessage[] = [
+    { role: 'user', content: userMessage },
+  ];
+
+  let fullResponse = '';
+  for await (const chunk of streamChatResponse(messages, CORNELL_SYSTEM_PROMPT)) {
+    fullResponse += chunk;
+  }
+
+  const trimmed = fullResponse.trim();
+  try {
+    const parsed = JSON.parse(trimmed);
+    if (parsed.rows && Array.isArray(parsed.rows)) {
+      return parsed;
+    }
+  } catch {
+    const firstBrace = trimmed.indexOf('{');
+    const lastBrace = trimmed.lastIndexOf('}');
+    if (firstBrace !== -1 && lastBrace > firstBrace) {
+      try {
+        const parsed = JSON.parse(trimmed.slice(firstBrace, lastBrace + 1));
+        if (parsed.rows && Array.isArray(parsed.rows)) {
+          return parsed;
+        }
+      } catch {}
+    }
+  }
+
+  console.error('AI raw response (first 1000 chars):', fullResponse.slice(0, 1000));
+  return {
+    title: pageTitle || 'Notes',
+    rows: [],
+    summary: 'Failed to generate notes. Please try again.',
+  };
+}
+
 export async function summarizeContent(content: string, length: string = 'medium', format: string = 'paragraph'): Promise<string> {
   if (!OPENROUTER_API_KEY) {
     throw new Error('OPENROUTER_API_KEY is not set');
