@@ -12,8 +12,6 @@ export function Quiz() {
 
   const [content, setContent] = useState('');
   const [pageTitle, setPageTitle] = useState('');
-  const [readingPage, setReadingPage] = useState(false);
-  const [pageRead, setPageRead] = useState(false);
 
   const [topic, setTopic] = useState('');
   const [numQuestions, setNumQuestions] = useState(5);
@@ -26,64 +24,10 @@ export function Quiz() {
   const [result, setResult] = useState<QuizResult | null>(null);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
 
-  useEffect(() => {
-    if (genMode === 'current-page' && !content) {
-      fetchPageContent();
-    }
-  }, [genMode]);
-
-  const fetchPageContent = async () => {
-    setReadingPage(true);
+  const handleContextLoaded = (ctx: any) => {
+    setContent(ctx.content);
+    setPageTitle(ctx.title);
     setError('');
-    try {
-      const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
-      const tab = tabs[0];
-      if (!tab?.id || !tab.url) throw new Error('No active tab found');
-
-      setPageTitle(tab.title || 'Untitled Page');
-
-      if (tab.url.startsWith('chrome://') || tab.url.startsWith('chrome-extension://') || tab.url.startsWith('about:')) {
-        throw new Error('Cannot read content from Chrome system pages');
-      }
-
-      let extracted: string | null = null;
-
-      try {
-        const response = await chrome.tabs.sendMessage(tab.id, { type: 'get-page-content' });
-        extracted = response?.content || null;
-      } catch {
-        const results = await chrome.scripting.executeScript({
-          target: { tabId: tab.id },
-          func: () => {
-            const article = document.querySelector('article');
-            const main = document.querySelector('main');
-            const el = article || main || document.body;
-            if (!el) return '';
-            const clone = el.cloneNode(true) as HTMLElement;
-            clone.querySelectorAll('script, style, nav, header, footer, iframe, svg, [role="navigation"], noscript').forEach(e => e.remove());
-            const headings = clone.querySelectorAll('h1, h2, h3, h4, h5, h6');
-            headings.forEach(h => { const level = h.tagName.toLowerCase(); const text = h.textContent?.trim(); if (text) h.replaceWith(document.createTextNode(`\n${'#'.repeat(parseInt(level[1]))} ${text}\n`)); });
-            const lists = clone.querySelectorAll('ul, ol');
-            lists.forEach(list => { const items = list.querySelectorAll('li'); items.forEach(li => { const text = li.textContent?.trim(); if (text) li.replaceWith(document.createTextNode(`\n- ${text}`)); }); });
-            const paras = clone.querySelectorAll('p');
-            paras.forEach(p => { const text = p.textContent?.trim(); if (text) p.replaceWith(document.createTextNode(`\n${text}\n`)); });
-            return (clone.textContent || '').replace(/\s+/g, ' ').replace(/\n\s+/g, '\n').trim().slice(0, 50000);
-          },
-        });
-        extracted = results?.[0]?.result || null;
-      }
-
-      if (extracted) {
-        setContent(extracted);
-        setPageRead(true);
-      } else {
-        throw new Error('No content found on this page');
-      }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to read page');
-    } finally {
-      setReadingPage(false);
-    }
   };
 
   const handleGenerate = async (e: React.FormEvent) => {
@@ -139,6 +83,12 @@ export function Quiz() {
       const correctCount = details.filter((d) => d.isCorrect).length;
       const score = (correctCount / questions.length) * 100;
 
+      try {
+        await api.trackQuizResult(score);
+      } catch (e) {
+        console.error('Failed to track quiz result:', e);
+      }
+
       setResult({ score, correctCount, totalQuestions: questions.length, details });
       setMode('result');
     } catch (err) {
@@ -159,14 +109,7 @@ export function Quiz() {
     setResult(null);
     setCurrentQuestionIndex(0);
     setContent('');
-    setPageRead(false);
     setGenMode('current-page');
-  };
-
-  const handleRefreshPage = () => {
-    setContent('');
-    setPageRead(false);
-    fetchPageContent();
   };
 
   if (mode === 'generate') {
@@ -176,8 +119,6 @@ export function Quiz() {
         onGenModeChange={setGenMode}
         content={content}
         pageTitle={pageTitle}
-        readingPage={readingPage}
-        pageRead={pageRead}
         topic={topic}
         onTopicChange={setTopic}
         numQuestions={numQuestions}
@@ -189,7 +130,8 @@ export function Quiz() {
         loading={loading}
         error={error}
         onGenerate={handleGenerate}
-        onRefreshPage={handleRefreshPage}
+        onContextLoaded={handleContextLoaded}
+        onError={setError}
       />
     );
   }

@@ -3,10 +3,10 @@
   "name": "EduSpark",
   "version": "1.0.0",
   "description": "AI-powered study assistant for CS students",
-  "permissions": ["activeTab", "scripting", "storage"],
+  "permissions": ["activeTab", "scripting", "storage", "declarativeNetRequest", "alarms", "sidePanel"],
   "host_permissions": ["<all_urls>"],
   "action": {
-    "default_popup": "src/popup.html",
+
     "default_title": "EduSpark",
     "default_icon": {
       "16": "images/eduspark.png",
@@ -26,7 +26,7 @@
     "service_worker": "background.js"
   },
   "content_security_policy": {
-    "extension_pages": "default-src 'self'; img-src 'self' https://res.cloudinary.com; connect-src 'self' http://localhost:3001; style-src 'self' 'unsafe-inline'"
+    "extension_pages": "default-src 'self'; img-src 'self' https://* data: blob:; connect-src 'self' http://localhost:3001; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com"
   },
   "content_scripts": [
     {

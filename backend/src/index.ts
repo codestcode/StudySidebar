@@ -8,6 +8,10 @@ import chatRouter from './routes/chat.js';
 import quizRouter from './routes/quiz.js';
 import summaryRouter from './routes/summary.js';
 import notesRouter from './routes/note.js';
+import youtubeRouter from './routes/youtube.js';
+import pdfRouter from './routes/pdf.js';
+import dashboardRouter from './routes/dashboard.js';
+import flashcardsRouter from './routes/flashcards.js';
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -41,6 +45,10 @@ app.use('/api/chat', ...requireAuth, chatRouter);
 app.use('/api/quiz', ...requireAuth, quizRouter);
 app.use('/api/summary', ...requireAuth, summaryRouter);
 app.use('/api/notes', ...requireAuth, notesRouter);
+app.use('/api/youtube', ...requireAuth, youtubeRouter);
+app.use('/api/pdf', ...requireAuth, pdfRouter);
+app.use('/api/dashboard', ...requireAuth, dashboardRouter);
+app.use('/api/flashcards', ...requireAuth, flashcardsRouter);
 
 async function checkDatabase() {
   try {

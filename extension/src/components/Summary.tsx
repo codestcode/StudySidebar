@@ -2,14 +2,16 @@ import React, { useState, useRef, useEffect } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { api } from '../utils/api';
-import { Sparkles, FileText, RotateCcw, Check, Copy, Globe, Loader2, AlertTriangle } from 'lucide-react';
+import { Sparkles, FileText, RotateCcw, Check, Copy, Globe, Loader2, AlertTriangle, Network } from 'lucide-react';
+import { ContextLoader } from './ContextLoader';
+import { type PageContext } from '../utils/page';
+import { MindMapViewer } from './MindMapViewer';
 import '../styles.css';
 
 export function Summary() {
   const [content, setContent] = useState('');
   const [pageTitle, setPageTitle] = useState('');
   const [sourceUrl, setSourceUrl] = useState('');
-  const [readingPage, setReadingPage] = useState(false);
   const [pageRead, setPageRead] = useState(false);
   const [summaryLength, setSummaryLength] = useState<'short' | 'medium' | 'detailed'>('short');
   const [summaryFormat, setSummaryFormat] = useState<'paragraph' | 'bullet' | 'concept'>('paragraph');
@@ -17,69 +19,21 @@ export function Summary() {
   const [error, setError] = useState('');
   const [summary, setSummary] = useState('');
   const [copied, setCopied] = useState(false);
+  const [showMindMap, setShowMindMap] = useState(false);
+  const [mindMapSyntax, setMindMapSyntax] = useState<string | null>(null);
+  const [generatingMindMap, setGeneratingMindMap] = useState(false);
   const summaryEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     summaryEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [summary]);
 
-  useEffect(() => {
-    fetchPageContent();
-  }, []);
-
-  const fetchPageContent = async () => {
-    setReadingPage(true);
+  const handleContextLoaded = (ctx: PageContext) => {
+    setContent(ctx.content);
+    setPageTitle(ctx.title);
+    setSourceUrl(ctx.url);
+    setPageRead(true);
     setError('');
-    try {
-      const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
-      const tab = tabs[0];
-      if (!tab?.id || !tab.url) throw new Error('No active tab found');
-
-      setPageTitle(tab.title || 'Untitled Page');
-      setSourceUrl(tab.url);
-
-      if (tab.url.startsWith('chrome://') || tab.url.startsWith('chrome-extension://') || tab.url.startsWith('about:')) {
-        throw new Error('Cannot read content from Chrome system pages');
-      }
-
-      let extracted: string | null = null;
-
-      try {
-        const response = await chrome.tabs.sendMessage(tab.id, { type: 'get-page-content' });
-        extracted = response?.content || null;
-      } catch {
-        const results = await chrome.scripting.executeScript({
-          target: { tabId: tab.id },
-          func: () => {
-            const article = document.querySelector('article');
-            const main = document.querySelector('main');
-            const el = article || main || document.body;
-            if (!el) return '';
-            const clone = el.cloneNode(true) as HTMLElement;
-            clone.querySelectorAll('script, style, nav, header, footer, iframe, svg, [role="navigation"], noscript').forEach(e => e.remove());
-            const headings = clone.querySelectorAll('h1, h2, h3, h4, h5, h6');
-            headings.forEach(h => { const level = h.tagName.toLowerCase(); const text = h.textContent?.trim(); if (text) h.replaceWith(document.createTextNode(`\n${'#'.repeat(parseInt(level[1]))} ${text}\n`)); });
-            const lists = clone.querySelectorAll('ul, ol');
-            lists.forEach(list => { const items = list.querySelectorAll('li'); items.forEach(li => { const text = li.textContent?.trim(); if (text) li.replaceWith(document.createTextNode(`\n- ${text}`)); }); });
-            const paras = clone.querySelectorAll('p');
-            paras.forEach(p => { const text = p.textContent?.trim(); if (text) p.replaceWith(document.createTextNode(`\n${text}\n`)); });
-            return (clone.textContent || '').replace(/\s+/g, ' ').replace(/\n\s+/g, '\n').trim().slice(0, 50000);
-          },
-        });
-        extracted = results?.[0]?.result || null;
-      }
-
-      if (extracted) {
-        setContent(extracted);
-        setPageRead(true);
-      } else {
-        throw new Error('No content found on this page');
-      }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to read page');
-    } finally {
-      setReadingPage(false);
-    }
   };
 
   const handleGenerate = async (e: React.FormEvent) => {
@@ -123,11 +77,31 @@ export function Summary() {
     }
   };
 
+  const handleVisualize = async () => {
+    if (mindMapSyntax) {
+      setShowMindMap(true);
+      return;
+    }
+    if (!content) return;
+    
+    try {
+      setGeneratingMindMap(true);
+      setShowMindMap(true);
+      const res = await api.generateMindMap(content);
+      setMindMapSyntax(res.mindmap);
+    } catch (err: any) {
+      setError(err.message || 'Failed to generate mind map');
+      setShowMindMap(false);
+    } finally {
+      setGeneratingMindMap(false);
+    }
+  };
+
   return (
     <div className="h-full overflow-y-auto p-4">
       <div className="max-w-lg mx-auto space-y-4">
 
-        {error && !readingPage && (
+        {error && !pageRead && (
           <div className="flex items-center gap-2 p-3 rounded-2xl bg-red-50 dark:bg-red-900/20 border border-red-100 dark:border-red-800 text-red-500 dark:text-red-400 text-sm">
             <AlertTriangle className="w-4 h-4 flex-shrink-0" />
             <span className="flex-1">{error}</span>
@@ -145,34 +119,10 @@ export function Summary() {
             </div>
           </div>
 
-          {readingPage ? (
-            <div className="flex items-center gap-3 p-4 rounded-2xl bg-slate-50 dark:bg-slate-700/50 border border-slate-200 dark:border-slate-600 mb-4">
-              <Loader2 className="w-5 h-5 animate-spin text-blue-500" />
-              <div>
-                <p className="text-sm font-medium text-slate-700 dark:text-slate-300 font-nunito">Reading page content...</p>
-                <p className="text-xs text-slate-400 dark:text-slate-500 font-nunito">Extracting text from the current tab</p>
-              </div>
-            </div>
-          ) : pageRead ? (
-            <div className="flex items-center gap-3 p-4 rounded-2xl bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 mb-4">
-              <div className="w-8 h-8 rounded-full bg-emerald-500 flex items-center justify-center flex-shrink-0">
-                <Check className="w-4 h-4 text-white" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-emerald-700 dark:text-emerald-300 font-nunito">Page content loaded</p>
-                <p className="text-xs text-emerald-500 dark:text-emerald-400 font-nunito truncate">{pageTitle} — {content.length.toLocaleString()} chars</p>
-              </div>
-              <button
-                type="button"
-                onClick={fetchPageContent}
-                disabled={readingPage}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-100 dark:bg-emerald-800 hover:bg-emerald-200 dark:hover:bg-emerald-700 text-xs text-emerald-700 dark:text-emerald-300 font-medium transition-colors disabled:opacity-50 flex-shrink-0"
-              >
-                <RotateCcw className="w-3 h-3" />
-                Refresh
-              </button>
-            </div>
-          ) : null}
+          <ContextLoader 
+            onContextLoaded={handleContextLoaded} 
+            onError={(err) => setError(err)} 
+          />
 
           <form onSubmit={handleGenerate} className="space-y-5">
             <div>
@@ -246,7 +196,7 @@ export function Summary() {
             <button
               type="submit"
               className="w-full py-3 rounded-2xl bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600 text-white text-sm font-semibold shadow-lg shadow-blue-500/25 transition-all active:scale-[0.98] disabled:opacity-50"
-              disabled={loading || !content || readingPage}
+              disabled={loading || !content}
             >
               {loading ? (
                 <span className="inline-flex items-center gap-2">
@@ -301,9 +251,37 @@ export function Summary() {
                     <RotateCcw className="w-3.5 h-3.5" />
                     Regenerate
                   </button>
+                  <button
+                    type="button"
+                    onClick={handleVisualize}
+                    disabled={generatingMindMap}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-purple-100 dark:bg-purple-900/30 hover:bg-purple-200 dark:hover:bg-purple-900/50 text-xs text-purple-600 dark:text-purple-400 font-medium transition-colors"
+                  >
+                    {generatingMindMap ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Network className="w-3.5 h-3.5" />}
+                    Visualize
+                  </button>
                 </div>
               </div>
             </div>
+
+            {showMindMap && (
+              <div className="border-b border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/30 p-4">
+                <div className="flex justify-between items-center mb-2">
+                  <h4 className="text-sm font-bold text-slate-700 dark:text-slate-300 flex items-center gap-2">
+                    <Network className="w-4 h-4 text-purple-500" /> Concept Map
+                  </h4>
+                  <button onClick={() => setShowMindMap(false)} className="text-slate-400 hover:text-slate-600">✕</button>
+                </div>
+                {generatingMindMap ? (
+                  <div className="h-64 flex flex-col items-center justify-center text-slate-500 text-sm">
+                    <Loader2 className="w-6 h-6 animate-spin mb-2 text-purple-500" />
+                    Generating visual map...
+                  </div>
+                ) : (
+                  <MindMapViewer syntax={mindMapSyntax || ''} />
+                )}
+              </div>
+            )}
 
             {pageTitle && (
               <div className="px-6 py-2.5 border-b border-slate-100 dark:border-slate-700/50 flex items-center gap-2 bg-slate-50/50 dark:bg-slate-800/30">

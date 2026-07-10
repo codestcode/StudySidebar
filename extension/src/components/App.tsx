@@ -6,12 +6,14 @@ import { Quiz } from './Quiz';
 import { Summary } from './Summary';
 import { Settings } from './Settings';
 import { Notes } from './Notes';
+import { Dashboard } from './Dashboard';
+import { Flashcards } from './Flashcards';
 import { storage } from '../utils/storage';
 import '../styles.css';
 
 export function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [activeTab, setActiveTab] = useState<'chat' | 'notes' | 'quiz' | 'summary'>('chat');
+  const [activeTab, setActiveTab] = useState<'chat' | 'notes' | 'quiz' | 'summary' | 'focus' | 'dashboard' | 'flashcards'>('chat');
   const [loading, setLoading] = useState(true);
   const [darkMode, setDarkMode] = useState(false);
   const [chatContext, setChatContext] = useState('');
@@ -55,7 +57,9 @@ export function App() {
     await storage.logout();
     setIsAuthenticated(false);
     setActiveTab('chat');
+    chrome.runtime.sendMessage({ type: 'update-badge', count: 0 }).catch(() => {});
   };
+
 
   const handleSendToChat = (content: string) => {
     setChatContext(content);
@@ -122,11 +126,11 @@ export function App() {
         </div>
       </header>
 
-      <nav className="flex bg-slate-100 dark:bg-slate-800 p-1 mx-4 mt-3 rounded-2xl gap-1">
-        {(['chat', 'notes', 'quiz', 'summary'] as const).map((tab) => (
+      <nav className="flex bg-slate-100 dark:bg-slate-800 p-1 mx-4 mt-3 rounded-2xl gap-0.5 overflow-x-auto no-scrollbar">
+        {(['dashboard', 'chat', 'notes', 'flashcards', 'quiz', 'summary', 'focus'] as const).map((tab) => (
           <button
             key={tab}
-            className={`flex-1 py-2.5 px-4 text-sm font-medium transition-all font-nunito rounded-xl ${
+            className={`flex-1 min-w-max py-2 px-3 text-[11px] font-bold transition-all font-nunito rounded-xl truncate ${
               activeTab === tab
                 ? 'bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 shadow-sm'
                 : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300'
@@ -139,10 +143,15 @@ export function App() {
       </nav>
 
       <main className="flex-1 overflow-y-auto">
+        {activeTab === 'dashboard' && <Dashboard />}
         {activeTab === 'chat' && <Chat initialContext={chatContext} />}
         {activeTab === 'notes' && <Notes />}
         {activeTab === 'quiz' && <Quiz />}
+        {activeTab === 'flashcards' && <Flashcards />}
         {activeTab === 'summary' && <Summary />}
+        <div className={activeTab === 'focus' ? 'h-full' : 'hidden'}>
+          <Focus />
+        </div>
       </main>
 
       {showLogoutConfirm && (

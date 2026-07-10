@@ -210,7 +210,7 @@ export const api = {
     return response.json();
   },
 
-  async generateNotes(pageContent: string, pageTitle?: string, pageUrl?: string, style?: string) {
+  async generateNotes(pageContent: string, pageTitle?: string, pageUrl?: string) {
     const token = await storage.getToken();
     if (!token) throw new Error('Not authenticated');
 
@@ -220,7 +220,7 @@ export const api = {
         'Content-Type': 'application/json',
         Authorization: `Bearer ${token}`,
       },
-      body: JSON.stringify({ pageContent, pageTitle, pageUrl, style }),
+      body: JSON.stringify({ pageContent, pageTitle, pageUrl }),
     });
 
     if (!response.ok) throw new Error('Notes generation failed');
@@ -267,4 +267,162 @@ export const api = {
     if (!response.ok) throw new Error('Failed to get notes');
     return response.json();
   },
+
+  async getYoutubeTranscript(url: string) {
+    const token = await storage.getToken();
+    if (!token) throw new Error('Not authenticated');
+
+    const response = await fetch(`${API_BASE}/youtube/transcript?url=${encodeURIComponent(url)}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+
+    if (!response.ok) throw new Error('Failed to fetch YouTube transcript');
+    return response.json();
+  },
+
+  async extractPdfText(file: File) {
+    const token = await storage.getToken();
+    if (!token) throw new Error('Not authenticated');
+
+    const formData = new FormData();
+    formData.append('file', file);
+
+    const response = await fetch(`${API_BASE}/pdf/extract`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}` },
+      body: formData,
+    });
+
+    if (!response.ok) throw new Error('Failed to extract PDF text');
+    return response.json();
+  },
+
+  async getDashboardStats() {
+    const token = await storage.getToken();
+    if (!token) throw new Error('Not authenticated');
+
+    const response = await fetch(`${API_BASE}/dashboard/stats`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+
+    if (!response.ok) throw new Error('Failed to get dashboard stats');
+    return response.json();
+  },
+
+  async trackStudySession(minutes: number) {
+    const token = await storage.getToken();
+    if (!token) throw new Error('Not authenticated');
+
+    const response = await fetch(`${API_BASE}/dashboard/study-session`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ minutes }),
+    });
+
+    if (!response.ok) throw new Error('Failed to track study session');
+    return response.json();
+  },
+
+  async trackQuizResult(score: number) {
+    const token = await storage.getToken();
+    if (!token) throw new Error('Not authenticated');
+
+    const response = await fetch(`${API_BASE}/dashboard/quiz-result`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ score }),
+    });
+
+    if (!response.ok) throw new Error('Failed to track quiz result');
+    return response.json();
+  },
+
+  async generateFlashcards(content: string, pageTitle?: string, pageUrl?: string, count?: number) {
+    const token = await storage.getToken();
+    if (!token) throw new Error('Not authenticated');
+
+    const response = await fetch(`${API_BASE}/flashcards/generate`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ content, pageTitle, pageUrl, count }),
+    });
+    if (!response.ok) throw new Error('Failed to generate flashcards');
+    return response.json();
+  },
+
+  async getFlashcards() {
+    const token = await storage.getToken();
+    if (!token) throw new Error('Not authenticated');
+
+    const response = await fetch(`${API_BASE}/flashcards/list`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (!response.ok) throw new Error('Failed to fetch flashcards');
+    return response.json();
+  },
+
+  async getDueFlashcards() {
+    const token = await storage.getToken();
+    if (!token) throw new Error('Not authenticated');
+
+    const response = await fetch(`${API_BASE}/flashcards/due`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (!response.ok) throw new Error('Failed to fetch due flashcards');
+    return response.json();
+  },
+
+  async reviewFlashcard(id: string, isCorrect: boolean) {
+    const token = await storage.getToken();
+    if (!token) throw new Error('Not authenticated');
+
+    const response = await fetch(`${API_BASE}/flashcards/review/${id}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ isCorrect }),
+    });
+    if (!response.ok) throw new Error('Failed to review flashcard');
+    return response.json();
+  },
+
+  async deleteFlashcard(id: string) {
+    const token = await storage.getToken();
+    if (!token) throw new Error('Not authenticated');
+
+    const response = await fetch(`${API_BASE}/flashcards/${id}`, {
+      method: 'DELETE',
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (!response.ok) throw new Error('Failed to delete flashcard');
+    return response.json();
+  },
+
+  async generateMindMap(content: string) {
+    const token = await storage.getToken();
+    if (!token) throw new Error('Not authenticated');
+
+    const response = await fetch(`${API_BASE}/notes/mindmap`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ pageContent: content }),
+    });
+    if (!response.ok) throw new Error('Failed to generate mind map');
+    return response.json();
+  },
 };
+

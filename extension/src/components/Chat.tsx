@@ -3,7 +3,9 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { api } from '../utils/api';
 import { storage } from '../utils/storage';
-import { Send, Sparkles, User, Bot, Copy, Check, Globe, Loader2, X, RefreshCw, Trash2 } from 'lucide-react';
+import { Send, Sparkles, User, Bot, Copy, Check, X, Trash2 } from 'lucide-react';
+import { ContextLoader } from './ContextLoader';
+import { type PageContext } from '../utils/page';
 import '../styles.css';
 
 interface ChatProps {
@@ -18,6 +20,7 @@ interface Message {
 interface PageInfo {
   title: string;
   url: string;
+  source: string;
 }
 
 function CopyButton({ text, label }: { text: string; label?: string }) {
@@ -103,10 +106,8 @@ export function Chat({ initialContext }: ChatProps) {
   const [context, setContext] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [fetchingContent, setFetchingContent] = useState(false);
-  const [currentPage, setCurrentPage] = useState<PageInfo | null>(null);
-  const [showPageChangePopup, setShowPageChangePopup] = useState(false);
   const [pendingPage, setPendingPage] = useState<PageInfo | null>(null);
+  const [showPageChangePopup, setShowPageChangePopup] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
@@ -150,7 +151,7 @@ export function Chat({ initialContext }: ChatProps) {
   useEffect(() => {
     const handler = (message: any) => {
       if (message.type === 'page-changed' && message.url) {
-        setPendingPage({ title: message.title || 'Untitled', url: message.url });
+        setPendingPage({ title: message.title || 'Untitled', url: message.url, source: 'web' });
         setShowPageChangePopup(true);
       }
     };
@@ -165,13 +166,7 @@ export function Chat({ initialContext }: ChatProps) {
   }, [messages]);
 
   const loadCurrentPage = async () => {
-    try {
-      const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
-      const tab = tabs[0];
-      if (tab?.title && tab?.url) {
-        setCurrentPage({ title: tab.title, url: tab.url });
-      }
-    } catch {}
+    // Handled by ContextLoader
   };
 
   const handleScroll = () => {
@@ -216,69 +211,8 @@ export function Chat({ initialContext }: ChatProps) {
     }
   };
 
-  const refreshContext = async () => {
-    setFetchingContent(true);
-    setError('');
-    try {
-      const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
-      const tab = tabs[0];
-      if (!tab?.id || !tab.url) throw new Error('No active tab found');
-
-      if (tab.url.startsWith('chrome://') || tab.url.startsWith('chrome-extension://') || tab.url.startsWith('about:')) {
-        throw new Error('Cannot read content from Chrome system pages');
-      }
-
-      const pageTitle = tab.title || 'Untitled Page';
-      let content: string | null = null;
-
-      try {
-        const response = await chrome.tabs.sendMessage(tab.id, { type: 'get-page-content' });
-        content = response?.content || null;
-      } catch {
-        const results = await chrome.scripting.executeScript({
-          target: { tabId: tab.id },
-          func: () => {
-            const article = document.querySelector('article');
-            const main = document.querySelector('main');
-            const el = article || main || document.body;
-            if (!el) return '';
-            const clone = el.cloneNode(true) as HTMLElement;
-            clone.querySelectorAll('script, style, nav, header, footer, iframe, svg, [role="navigation"], noscript').forEach(e => e.remove());
-            const headings = clone.querySelectorAll('h1, h2, h3, h4, h5, h6');
-            headings.forEach(h => {
-              const level = h.tagName.toLowerCase();
-              const text = h.textContent?.trim();
-              if (text) h.replaceWith(document.createTextNode(`\n${'#'.repeat(parseInt(level[1]))} ${text}\n`));
-            });
-            const lists = clone.querySelectorAll('ul, ol');
-            lists.forEach(list => {
-              list.querySelectorAll('li').forEach(li => {
-                const text = li.textContent?.trim();
-                if (text) li.replaceWith(document.createTextNode(`\n- ${text}`));
-              });
-            });
-            const paras = clone.querySelectorAll('p');
-            paras.forEach(p => {
-              const text = p.textContent?.trim();
-              if (text) p.replaceWith(document.createTextNode(`\n${text}\n`));
-            });
-            return (clone.textContent || '').replace(/\s+/g, ' ').replace(/\n\s+/g, '\n').trim().slice(0, 50000);
-          },
-        });
-        content = results?.[0]?.result || null;
-      }
-
-      if (content) {
-        setCurrentPage({ title: pageTitle, url: tab.url });
-        setContext(`Page: ${pageTitle}\nURL: ${tab.url}\n\n--- Page Content ---\n\n${content}`);
-      } else {
-        throw new Error('No content found on this page');
-      }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to read page');
-    } finally {
-      setFetchingContent(false);
-    }
+  const handleContextLoaded = (ctx: PageContext) => {
+    setContext(`Page: ${ctx.title}\nURL: ${ctx.url}\n\n--- Content ---\n\n${ctx.content}`);
   };
 
   const refreshForNewPage = async () => {
@@ -288,9 +222,11 @@ export function Chat({ initialContext }: ChatProps) {
     setError('');
     await storage.set({ chatMessages: [] });
     if (pendingPage) {
-      setCurrentPage(pendingPage);
       setPendingPage(null);
-      await refreshContext();
+      // Let ContextLoader reload on page change implicitly by unmounting or forcing reload,
+      // but actually for simplicity just reload the whole window or reset state.
+      // Easiest is to force a re-render of ContextLoader.
+      window.location.reload();
     }
   };
 
@@ -317,25 +253,11 @@ export function Chat({ initialContext }: ChatProps) {
         </div>
       )}
 
-      {currentPage && (
-        <div className="glass3d rounded-2xl px-4 py-2.5 flex items-center gap-2">
-          <Globe className="w-4 h-4 text-blue-500 flex-shrink-0" />
-          <span className="text-xs text-slate-600 dark:text-slate-300 font-nunito truncate flex-1">{currentPage.title}</span>
-          <button
-            type="button"
-            onClick={refreshContext}
-            disabled={fetchingContent}
-            className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-xs text-slate-600 dark:text-slate-300 font-medium transition-colors disabled:opacity-50"
-          >
-            {fetchingContent ? (
-              <Loader2 className="w-3 h-3 animate-spin" />
-            ) : (
-              <RefreshCw className="w-3 h-3" />
-            )}
-            {fetchingContent ? 'Loading...' : 'Refresh'}
-          </button>
-        </div>
-      )}
+      <ContextLoader 
+        onContextLoaded={handleContextLoaded} 
+        onError={(err) => setError(err)} 
+        compact={true} 
+      />
 
       <div
         ref={messagesContainerRef}
@@ -441,7 +363,6 @@ export function Chat({ initialContext }: ChatProps) {
       {showPageChangePopup && pendingPage && (
         <div className="absolute inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4 animate-fade-slide-up rounded-3xl">
           <div className="glass3d rounded-3xl p-6 max-w-sm text-center w-full">
-            <Globe className="w-12 h-12 text-blue-400 mx-auto mb-3" />
             <h3 className="text-base font-semibold text-slate-900 dark:text-white font-nunito mb-2">New Page Detected</h3>
             <p className="text-xs text-slate-500 dark:text-slate-400 font-nunito mb-1 truncate">{pendingPage.title}</p>
             <p className="text-xs text-slate-400 font-nunito mb-5 truncate">{pendingPage.url}</p>

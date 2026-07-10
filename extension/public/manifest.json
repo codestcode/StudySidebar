@@ -3,10 +3,10 @@
   "name": "EduSpark",
   "version": "1.0.0",
   "description": "AI-powered study assistant for CS students",
-  "permissions": ["activeTab", "scripting", "storage"],
+  "permissions": ["activeTab", "scripting", "storage", "declarativeNetRequest", "alarms", "sidePanel"],
   "host_permissions": ["<all_urls>"],
   "action": {
-    "default_popup": "popup.html",
+
     "default_title": "EduSpark",
     "default_icon": {
       "16": "images/eduspark.png",

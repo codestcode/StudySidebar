@@ -1,7 +1,7 @@
 import { Router, type Request, type Response } from 'express';
 import { supabase } from '../db/client.js';
 import { generateId } from '../utils/auth.js';
-import { generateCornellNotes } from '../utils/openrouter.js';
+import { generateCornellNotes, generateMindMapFromContent } from '../utils/openrouter.js';
 
 const router: Router = Router();
 
@@ -11,7 +11,6 @@ interface NotesRequest extends Request {
     pageContent?: string;
     pageTitle?: string;
     pageUrl?: string;
-    style?: string;
     notesJson?: any;
   };
   params: {
@@ -22,7 +21,7 @@ interface NotesRequest extends Request {
 
 router.post('/generate', async (req: NotesRequest, res: Response) => {
   try {
-    const { pageContent, pageTitle, pageUrl, style } = req.body;
+    const { pageContent, pageTitle, pageUrl } = req.body;
     const userId = req.userId;
 
     if (!userId) {
@@ -33,7 +32,7 @@ router.post('/generate', async (req: NotesRequest, res: Response) => {
       return res.status(400).json({ error: 'Page content required' });
     }
 
-    const notesData = await generateCornellNotes(pageContent, pageTitle, pageUrl, style);
+    const notesData = await generateCornellNotes(pageContent, pageTitle, pageUrl);
 
     const noteId = generateId();
     const { error } = await supabase.from('notes').insert({
@@ -142,6 +141,19 @@ router.get('/page/:pageUrl', async (req: NotesRequest, res: Response) => {
   } catch (error) {
     console.error('Get page notes error:', error);
     res.status(500).json({ error: 'Failed to get page notes' });
+  }
+});
+
+router.post('/mindmap', async (req: NotesRequest, res: Response) => {
+  try {
+    const { pageContent } = req.body;
+    if (!req.userId) return res.status(401).json({ error: 'Unauthorized' });
+    if (!pageContent) return res.status(400).json({ error: 'Content required' });
+    const mindmap = await generateMindMapFromContent(pageContent);
+    res.json({ mindmap });
+  } catch (error) {
+    console.error('Mindmap error:', error);
+    res.status(500).json({ error: 'Failed to generate mind map' });
   }
 });
 

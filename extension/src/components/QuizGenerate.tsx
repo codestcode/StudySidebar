@@ -7,8 +7,6 @@ interface QuizGenerateProps {
   onGenModeChange: (mode: GenMode) => void;
   content: string;
   pageTitle: string;
-  readingPage: boolean;
-  pageRead: boolean;
   topic: string;
   onTopicChange: (topic: string) => void;
   numQuestions: number;
@@ -20,8 +18,11 @@ interface QuizGenerateProps {
   loading: boolean;
   error: string;
   onGenerate: (e: React.FormEvent) => void;
-  onRefreshPage: () => void;
+  onContextLoaded: (ctx: any) => void;
+  onError: (err: string) => void;
 }
+
+import { ContextLoader } from './ContextLoader';
 
 export function QuizGenerate({
   genMode, onGenModeChange,
@@ -31,13 +32,13 @@ export function QuizGenerate({
   difficulty, onDifficultyChange,
   questionTypes, onQuestionTypesChange,
   loading, error,
-  onGenerate, onRefreshPage,
+  onGenerate, onContextLoaded, onError,
 }: QuizGenerateProps) {
   return (
     <div className="h-full overflow-y-auto p-4">
       <div className="max-w-lg mx-auto space-y-4">
 
-        {error && !readingPage && (
+        {error && genMode === 'enter-topic' && (
           <div className="flex items-center gap-2 p-3 rounded-2xl bg-red-50 dark:bg-red-900/20 border border-red-100 dark:border-red-800 text-red-500 dark:text-red-400 text-sm">
             <AlertTriangle className="w-4 h-4 flex-shrink-0" />
             <span className="flex-1">{error}</span>
@@ -88,36 +89,7 @@ export function QuizGenerate({
 
           <form onSubmit={onGenerate} className="space-y-5">
             {genMode === 'current-page' ? (
-              <>
-                {readingPage ? (
-                  <div className="flex items-center gap-3 p-4 rounded-2xl bg-slate-50 dark:bg-slate-700/50 border border-slate-200 dark:border-slate-600">
-                    <Loader2 className="w-5 h-5 animate-spin text-blue-500" />
-                    <div>
-                      <p className="text-sm font-medium text-slate-700 dark:text-slate-300 font-nunito">Reading page content...</p>
-                      <p className="text-xs text-slate-400 dark:text-slate-500 font-nunito">Extracting text from the current tab</p>
-                    </div>
-                  </div>
-                ) : pageRead ? (
-                  <div className="flex items-center gap-3 p-4 rounded-2xl bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800">
-                    <div className="w-8 h-8 rounded-full bg-emerald-500 flex items-center justify-center flex-shrink-0">
-                      <Check className="w-4 h-4 text-white" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-emerald-700 dark:text-emerald-300 font-nunito">Page content loaded</p>
-                      <p className="text-xs text-emerald-500 dark:text-emerald-400 font-nunito truncate">{pageTitle} — {content.length.toLocaleString()} chars</p>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={onRefreshPage}
-                      disabled={readingPage}
-                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-100 dark:bg-emerald-800 hover:bg-emerald-200 dark:hover:bg-emerald-700 text-xs text-emerald-700 dark:text-emerald-300 font-medium transition-colors disabled:opacity-50 flex-shrink-0"
-                    >
-                      <RotateCcw className="w-3 h-3" />
-                      Refresh
-                    </button>
-                  </div>
-                ) : null}
-              </>
+              <ContextLoader onContextLoaded={onContextLoaded} onError={onError} />
             ) : (
               <div>
                 <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2 font-nunito">Topic *</label>
@@ -245,8 +217,7 @@ export function QuizGenerate({
                 loading ||
                 (genMode === 'enter-topic' && !topic.trim()) ||
                 (genMode === 'current-page' && !content) ||
-                questionTypes.size === 0 ||
-                readingPage
+                questionTypes.size === 0
               }
             >
               {loading ? (

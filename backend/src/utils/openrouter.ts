@@ -305,70 +305,12 @@ Rules:
 - Summary must NOT just repeat the rows — read like a final review paragraph
 - Generate unique string IDs for each row`;
 
-const MINDMAP_SYSTEM_PROMPT = `You are a study assistant that generates mind-map-style notes from webpage content.
-
-Return ONLY valid JSON in this exact format, no other text:
-{
-  "title": "A concise title for these notes based on the page",
-  "rows": [
-    {
-      "id": "unique-id-1",
-      "cue": "Central concept or topic name for a node",
-      "note": "Brief explanation of the concept, how it connects to related ideas",
-      "importance": "high" | "medium" | "low"
-    }
-  ],
-  "summary": "2-3 sentence overview connecting all the key ideas"
-}
-
-Rules:
-- Aim for 5-10 rows
-- Cue = a short concept/topic name (1-4 words) — acts as a node label in a visual map
-- Note = 1-2 sentences explaining the concept and how it connects to other concepts
-- Mark 2-3 rows as "high" importance (core topics)
-- Use simple, scannable language — the note will appear in a hover tooltip
-- Summary = big-picture connections between the concepts
-- Generate unique string IDs for each row`;
-
-const FLASHCARD_SYSTEM_PROMPT = `You are a study assistant that generates flash-card-style notes from webpage content.
-
-Return ONLY valid JSON in this exact format, no other text:
-{
-  "title": "A concise title for these notes based on the page",
-  "rows": [
-    {
-      "id": "unique-id-1",
-      "cue": "Short term, question, or concept name (front of card)",
-      "note": "Clear definition or answer (back of card), 1-2 sentences",
-      "importance": "high" | "medium" | "low"
-    }
-  ],
-  "summary": "3-5 sentence recap connecting all the key ideas"
-}
-
-Rules:
-- Aim for 6-12 cards
-- Cue = the term or question that goes on the FRONT of the flash card — must be self-contained
-- Note = the definition or answer on the BACK — must be a complete, clear explanation
-- Mark 2-3 rows as "high" importance (must-know concepts)
-- Each cue/note pair should work as a standalone flash card for active recall studying
-- Generate unique string IDs for each row`;
-
-const STYLE_PROMPTS: Record<string, string> = {
-  cornell: CORNELL_SYSTEM_PROMPT,
-  mindmap: MINDMAP_SYSTEM_PROMPT,
-  flashcards: FLASHCARD_SYSTEM_PROMPT,
-};
-
-export async function generateCornellNotes(content: string, pageTitle?: string, pageUrl?: string, style?: string): Promise<any> {
+export async function generateCornellNotes(content: string, pageTitle?: string, pageUrl?: string): Promise<any> {
   if (!OPENROUTER_API_KEY) {
     throw new Error('OPENROUTER_API_KEY is not set');
   }
 
-  const stylePrompt = STYLE_PROMPTS[style || 'cornell'] || CORNELL_SYSTEM_PROMPT;
-  const styleName = style === 'mindmap' ? 'Mind Map' : style === 'flashcards' ? 'Flash Card' : 'Cornell';
-
-  const userMessage = `Generate ${styleName}-style study notes from the following page content.
+  const userMessage = `Generate Cornell-style study notes from the following page content.
 
 Page title: ${pageTitle || 'Untitled'}
 Page URL: ${pageUrl || 'Unknown'}
@@ -381,7 +323,7 @@ ${content}`;
   ];
 
   let fullResponse = '';
-  for await (const chunk of streamChatResponse(messages, stylePrompt)) {
+  for await (const chunk of streamChatResponse(messages, CORNELL_SYSTEM_PROMPT)) {
     fullResponse += chunk;
   }
 
@@ -431,4 +373,107 @@ export async function summarizeContent(content: string, length: string = 'medium
   }
 
   return fullResponse;
+}
+
+const FLASHCARD_SYSTEM_PROMPT = `You are a study assistant that generates flashcards from webpage content or notes.
+
+Return ONLY valid JSON in this exact format, no other text:
+{
+  "flashcards": [
+    {
+      "question": "A concise question testing a single concept (max 15 words)?",
+      "answer": "A clear, concise, and direct answer (max 30 words)."
+    }
+  ]
+}
+
+Rules:
+- Questions must be clear, specific, and self-contained.
+- Answers should be punchy and easy to memorize for active recall.
+- Avoid multi-part answers or overly wordy explanations.
+- Focus on key definitions, core concepts, comparisons, and facts.
+- Generate a number of cards matching the requested count.`;
+
+export async function generateFlashcardsFromContent(
+  content: string,
+  pageTitle?: string,
+  pageUrl?: string,
+  count: number = 5
+): Promise<any> {
+  if (!OPENROUTER_API_KEY) {
+    throw new Error('OPENROUTER_API_KEY is not set');
+  }
+
+  const userMessage = `Generate exactly ${count} high-quality flashcards from the following content.
+
+Page Title: ${pageTitle || 'Untitled'}
+Page URL: ${pageUrl || 'Unknown'}
+
+Content:
+${content}`;
+
+  const messages: ChatMessage[] = [
+    { role: 'user', content: userMessage },
+  ];
+
+  let fullResponse = '';
+  for await (const chunk of streamChatResponse(messages, FLASHCARD_SYSTEM_PROMPT)) {
+    fullResponse += chunk;
+  }
+
+  const trimmed = fullResponse.trim();
+  try {
+    const parsed = JSON.parse(trimmed);
+    if (parsed.flashcards && Array.isArray(parsed.flashcards)) {
+      return parsed;
+    }
+  } catch {
+    const firstBrace = trimmed.indexOf('{');
+    const lastBrace = trimmed.lastIndexOf('}');
+    if (firstBrace !== -1 && lastBrace > firstBrace) {
+      try {
+        const parsed = JSON.parse(trimmed.slice(firstBrace, lastBrace + 1));
+        if (parsed.flashcards && Array.isArray(parsed.flashcards)) {
+          return parsed;
+        }
+      } catch {}
+    }
+  }
+
+  console.error('AI raw response for flashcards (first 1000 chars):', fullResponse.slice(0, 1000));
+  return { flashcards: [] };
+}
+
+const MINDMAP_SYSTEM_PROMPT = `You are a study assistant that converts text into a Concept Map using Mermaid.js syntax.
+
+Return ONLY valid mermaid syntax starting with 'graph TD' or 'mindmap'. No markdown blocks, no formatting, no extra text.
+
+Rules:
+- Keep node text concise (1-4 words max)
+- Use standard flowchart syntax (graph TD)
+- Root node at the top, branching out
+- Example:
+graph TD
+A[Main Concept] --> B[Sub Concept 1]
+A --> C[Sub Concept 2]
+B --> D[Detail 1]
+`;
+
+export async function generateMindMapFromContent(content: string): Promise<string> {
+  if (!OPENROUTER_API_KEY) throw new Error('OPENROUTER_API_KEY is not set');
+
+  const messages: ChatMessage[] = [
+    { role: 'user', content: `Create a mermaid concept map from this content:\n\n${content}` }
+  ];
+
+  let fullResponse = '';
+  for await (const chunk of streamChatResponse(messages, MINDMAP_SYSTEM_PROMPT)) {
+    fullResponse += chunk;
+  }
+
+  const trimmed = fullResponse.trim();
+  const match = trimmed.match(/```mermaid\n([\s\S]*?)```/) || trimmed.match(/```\n([\s\S]*?)```/);
+  if (match) return match[1].trim();
+
+  return trimmed;
 }
