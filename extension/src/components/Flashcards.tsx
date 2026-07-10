@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { api } from '../utils/api';
-import { Sparkles, Brain, Clock, ChevronRight, RotateCcw, Check, X, Layers, BrainCircuit, Play } from 'lucide-react';
+import { Sparkles, Brain, Clock, ChevronRight, RotateCcw, Check, X, Layers, BrainCircuit, Play, Trash2 } from 'lucide-react';
 import { ContextLoader } from './ContextLoader';
 import { type PageContext } from '../utils/page';
 import '../styles.css';
@@ -17,26 +17,27 @@ export function Flashcards() {
   const [showAnswer, setShowAnswer] = useState(false);
   const [generatedCount, setGeneratedCount] = useState(5);
 
-  const fetchCards = async () => {
+  const fetchCards = async (pageUrl?: string) => {
     try {
       const cards = await api.getFlashcards();
-      setAllCards(cards);
+      setAllCards(pageUrl ? cards.filter((c: any) => c.page_url === pageUrl) : cards);
     } catch {}
   };
 
-  const fetchDueCards = async () => {
+  const fetchDueCards = async (pageUrl?: string) => {
     try {
       const due = await api.getDueFlashcards();
-      setDueCards(due);
+      setDueCards(pageUrl ? due.filter((c: any) => c.page_url === pageUrl) : due);
       setCurrentReviewIndex(0);
       setShowAnswer(false);
     } catch {}
   };
 
   useEffect(() => {
-    if (activeTab === 'browse') fetchCards();
-    if (activeTab === 'review') fetchDueCards();
-  }, [activeTab]);
+    const url = pageContext?.url;
+    if (activeTab === 'browse') fetchCards(url);
+    if (activeTab === 'review') fetchDueCards(url);
+  }, [activeTab, pageContext?.url]);
 
   const handleContextLoaded = useCallback((ctx: PageContext) => {
     setPageContext(ctx);
@@ -49,12 +50,24 @@ export function Flashcards() {
     setError('');
     
     try {
+      await api.clearAllFlashcards();
       await api.generateFlashcards(pageContext.content, pageContext.title, pageContext.url, generatedCount);
       setActiveTab('browse');
     } catch (err: any) {
       setError(err.message || 'Generation failed');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleClearAll = async () => {
+    if (!confirm('Delete all flashcards?')) return;
+    try {
+      await api.clearAllFlashcards();
+      setAllCards([]);
+      setDueCards([]);
+    } catch (err: any) {
+      setError(err.message);
     }
   };
 
@@ -161,8 +174,17 @@ export function Flashcards() {
               </div>
             ) : (
               <div className="w-full max-w-sm">
-                <div className="text-center text-xs font-bold text-slate-400 mb-4 tracking-widest uppercase">
-                  Card {currentReviewIndex + 1} of {dueCards.length}
+                <div className="flex items-center justify-between mb-4">
+                  <div className="text-xs font-bold text-slate-400 tracking-widest uppercase">
+                    Card {currentReviewIndex + 1} of {dueCards.length}
+                  </div>
+                  <button
+                    onClick={handleClearAll}
+                    className="flex items-center gap-1 text-[10px] font-bold text-red-400 hover:text-red-500 dark:text-red-500 dark:hover:text-red-400 transition-colors"
+                  >
+                    <Trash2 className="w-3 h-3" />
+                    Clear All
+                  </button>
                 </div>
                 
                 <div 
@@ -211,6 +233,15 @@ export function Flashcards() {
 
         {activeTab === 'browse' && (
           <div className="space-y-3 pb-4 animate-fade-slide-up">
+            {allCards.length > 0 && (
+              <button
+                onClick={handleClearAll}
+                className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-red-50 dark:bg-red-900/20 text-red-500 dark:text-red-400 text-xs font-bold hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+                Clear All Flashcards
+              </button>
+            )}
             {allCards.length === 0 ? (
               <div className="text-center py-10 text-slate-500 text-sm">No flashcards yet.</div>
             ) : (

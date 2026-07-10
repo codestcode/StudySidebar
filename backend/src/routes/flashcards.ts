@@ -130,6 +130,23 @@ router.post('/review/:id', async (req: FlashcardsRequest, res: Response) => {
   }
 });
 
+router.delete('/all', async (req: FlashcardsRequest, res: Response) => {
+  try {
+    if (!req.userId) return res.status(401).json({ error: 'Unauthorized' });
+
+    const { error } = await supabase
+      .from('flashcards')
+      .delete()
+      .eq('user_id', req.userId);
+
+    if (error) throw error;
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Delete all flashcards error:', error);
+    res.status(500).json({ error: 'Failed to delete flashcards' });
+  }
+});
+
 router.delete('/:id', async (req: FlashcardsRequest, res: Response) => {
   try {
     if (!req.userId) return res.status(401).json({ error: 'Unauthorized' });

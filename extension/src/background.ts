@@ -42,7 +42,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       priority: 1,
       action: { 
         type: chrome.declarativeNetRequest.RuleActionType.REDIRECT,
-        redirect: { extensionPath: '/src/blocked.html' }
+        redirect: { extensionPath: '/blocked.html' }
       },
       condition: {
         urlFilter: `||${domain}`,

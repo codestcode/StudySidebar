@@ -412,6 +412,18 @@ export const api = {
     return response.json();
   },
 
+  async clearAllFlashcards() {
+    const token = await storage.getToken();
+    if (!token) throw new Error('Not authenticated');
+
+    const response = await fetch(`${API_BASE}/flashcards/all`, {
+      method: 'DELETE',
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (!response.ok) throw new Error('Failed to clear flashcards');
+    return response.json();
+  },
+
   async generateMindMap(content: string) {
     const token = await storage.getToken();
     if (!token) throw new Error('Not authenticated');
