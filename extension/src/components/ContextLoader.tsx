@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { Loader2, Globe, FileText, Check, RotateCcw, UploadCloud, AlertTriangle } from 'lucide-react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { Loader2, Globe, FileText, Check, RotateCcw, UploadCloud, AlertTriangle, Upload } from 'lucide-react';
 import { fetchPageContent, type PageContext } from '../utils/page';
 import { api } from '../utils/api';
 
@@ -14,6 +14,7 @@ export function ContextLoader({ onContextLoaded, onError, compact = false }: Con
   const [context, setContext] = useState<PageContext | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const loadContext = useCallback(async () => {
     setLoading(true);
@@ -59,6 +60,10 @@ export function ContextLoader({ onContextLoaded, onError, compact = false }: Con
       return;
     }
 
+    await processPdf(file);
+  };
+
+  const processPdf = async (file: File) => {
     setUploading(true);
     onError('');
     try {
@@ -78,6 +83,17 @@ export function ContextLoader({ onContextLoaded, onError, compact = false }: Con
     }
   };
 
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.type !== 'application/pdf') {
+      onError('Only PDF files are supported.');
+      return;
+    }
+    processPdf(file);
+    e.target.value = '';
+  };
+
   if (loading || uploading) {
     return (
       <div className={`flex items-center gap-3 p-4 rounded-2xl bg-slate-50 dark:bg-slate-700/50 border border-slate-200 dark:border-slate-600 ${compact ? 'mb-2' : 'mb-4'}`}>
@@ -95,42 +111,50 @@ export function ContextLoader({ onContextLoaded, onError, compact = false }: Con
   }
 
   return (
-    <div
-      onDragOver={handleDragOver}
-      onDragLeave={handleDragLeave}
-      onDrop={handleDrop}
-      className={`relative flex items-center gap-3 p-4 rounded-2xl border transition-colors ${
-        isDragging 
-          ? 'bg-blue-50/80 dark:bg-blue-900/20 border-blue-400 border-dashed' 
-          : 'bg-emerald-50 dark:bg-emerald-900/20 border-emerald-200 dark:border-emerald-800'
-      } ${compact ? 'mb-2' : 'mb-4'}`}
-    >
-      {isDragging ? (
-        <div className="absolute inset-0 flex items-center justify-center bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm rounded-2xl z-10 border-2 border-dashed border-blue-500">
-          <p className="text-sm font-bold text-blue-600 dark:text-blue-400 flex items-center gap-2">
-            <UploadCloud className="w-5 h-5" />
-            Drop PDF to load context
-          </p>
-        </div>
-      ) : null}
-
-      {context ? (
-        compact ? (
-          <div className="flex items-center gap-2 w-full">
-            <Check className="w-3.5 h-3.5 text-emerald-500 flex-shrink-0" />
-            <span className="text-[11px] text-emerald-600 dark:text-emerald-400 font-nunito flex-1 truncate">
-              {context.title}
-            </span>
-            <button
-              type="button"
-              onClick={loadContext}
-              className="flex items-center gap-1 px-2 py-1 rounded-lg bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-[11px] text-slate-600 dark:text-slate-300 font-medium transition-colors flex-shrink-0"
-              title="Reload from current tab"
-            >
-              <RotateCcw className="w-3 h-3" />
-            </button>
+    <>
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept=".pdf,application/pdf"
+        className="hidden"
+        onChange={handleFileSelect}
+      />
+      <div
+        onDragOver={handleDragOver}
+        onDragLeave={handleDragLeave}
+        onDrop={handleDrop}
+        className={`relative flex items-center gap-3 p-4 rounded-2xl border transition-colors ${
+          isDragging 
+            ? 'bg-blue-50/80 dark:bg-blue-900/20 border-blue-400 border-dashed' 
+            : 'bg-emerald-50 dark:bg-emerald-900/20 border-emerald-200 dark:border-emerald-800'
+        } ${compact ? 'mb-2' : 'mb-4'}`}
+      >
+        {isDragging ? (
+          <div className="absolute inset-0 flex items-center justify-center bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm rounded-2xl z-10 border-2 border-dashed border-blue-500">
+            <p className="text-sm font-bold text-blue-600 dark:text-blue-400 flex items-center gap-2">
+              <UploadCloud className="w-5 h-5" />
+              Drop PDF to load context
+            </p>
           </div>
-        ) : (
+        ) : null}
+
+        {context ? (
+          compact ? (
+            <div className="flex items-center gap-2 w-full">
+              <Check className="w-3.5 h-3.5 text-emerald-500 flex-shrink-0" />
+              <span className="text-[11px] text-emerald-600 dark:text-emerald-400 font-nunito flex-1 truncate">
+                {context.title}
+              </span>
+              <button
+                type="button"
+                onClick={loadContext}
+                className="flex items-center gap-1 px-2 py-1 rounded-lg bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-[11px] text-slate-600 dark:text-slate-300 font-medium transition-colors flex-shrink-0"
+                title="Reload from current tab"
+              >
+                <RotateCcw className="w-3 h-3" />
+              </button>
+            </div>
+          ) : (
         <>
           <div className="w-8 h-8 rounded-full bg-emerald-500 flex items-center justify-center flex-shrink-0">
             {context.source === 'pdf' ? (
@@ -161,21 +185,32 @@ export function ContextLoader({ onContextLoaded, onError, compact = false }: Con
         </>
         )
       ) : (
-        <div className="flex items-center gap-3 w-full">
-          <AlertTriangle className="w-5 h-5 text-amber-500" />
-          <p className="text-sm font-medium text-slate-700 dark:text-slate-300 flex-1">
-            No context loaded. Drag a PDF here.
-          </p>
+        <div className="flex flex-col gap-3 w-full">
+          <div className="flex items-center gap-3 w-full">
+            <AlertTriangle className="w-5 h-5 text-amber-500 flex-shrink-0" />
+            <p className="text-sm font-medium text-slate-700 dark:text-slate-300 flex-1">
+              No context loaded. Drag a PDF here or upload from your computer.
+            </p>
+            <button
+              type="button"
+              onClick={loadContext}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 text-xs text-slate-700 dark:text-slate-300 font-medium transition-colors flex-shrink-0"
+            >
+              <RotateCcw className="w-3 h-3" />
+              Retry
+            </button>
+          </div>
           <button
             type="button"
-            onClick={loadContext}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 text-xs text-slate-700 dark:text-slate-300 font-medium transition-colors"
+            onClick={() => fileInputRef.current?.click()}
+            className="flex items-center justify-center gap-2 w-full py-2.5 rounded-xl bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 hover:bg-blue-100 dark:hover:bg-blue-900/40 text-xs text-blue-600 dark:text-blue-400 font-medium transition-colors"
           >
-            <RotateCcw className="w-3 h-3" />
-            Retry
+            <Upload className="w-3.5 h-3.5" />
+            Upload PDF from computer
           </button>
         </div>
       )}
-    </div>
+      </div>
+    </>
   );
 }

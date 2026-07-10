@@ -66,8 +66,10 @@ export function Flashcards() {
       await api.reviewFlashcard(currentCard.id, isCorrect);
       
       if (currentReviewIndex + 1 < dueCards.length) {
-        setCurrentReviewIndex(prev => prev + 1);
         setShowAnswer(false);
+        setTimeout(() => {
+          setCurrentReviewIndex(prev => prev + 1);
+        }, 350);
       } else {
         await fetchDueCards();
       }
@@ -166,8 +168,9 @@ export function Flashcards() {
                 <div 
                   className="w-full min-h-[250px] perspective-1000 cursor-pointer group"
                   onClick={() => setShowAnswer(!showAnswer)}
+                  key={dueCards[currentReviewIndex]?.id}
                 >
-                  <div className={`relative w-full h-full duration-500 preserve-3d ${showAnswer ? 'rotate-y-180' : ''}`}>
+                  <div className={`relative w-full h-full transition-transform duration-500 preserve-3d ${showAnswer ? 'rotate-y-180' : ''}`}>
                     
                     <div className="absolute inset-0 backface-hidden glass3d rounded-3xl p-6 flex items-center justify-center text-center shadow-xl border border-slate-200 dark:border-slate-700">
                       <p className="text-lg font-bold text-slate-900 dark:text-white">

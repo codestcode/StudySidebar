@@ -96,7 +96,7 @@ export function App() {
 
   return (
     <div className="flex flex-col h-full bg-slate-50 dark:bg-slate-900 transition-colors duration-200 relative overflow-hidden">
-      <div className="absolute inset-0 pointer-events-none">
+      <div className="absolute inset-0 pointer-events-none z-0">
         <BookOpen className="absolute top-20 left-4 w-20 h-20 text-blue-200/60 dark:text-blue-800/40 rotate-12" />
         <GraduationCap className="absolute top-24 right-4 w-24 h-24 text-emerald-200/60 dark:text-emerald-800/40 -rotate-6" />
         <Brain className="absolute bottom-8 left-8 w-16 h-16 text-purple-200/60 dark:text-purple-800/40 -rotate-12" />
@@ -104,7 +104,7 @@ export function App() {
         <Library className="absolute top-1/2 -right-3 w-24 h-24 text-emerald-200/50 dark:text-emerald-800/35 rotate-12" />
         <ScrollText className="absolute top-1/3 -left-3 w-16 h-16 text-slate-300/60 dark:text-slate-600/40 rotate-[30deg]" />
       </div>
-      <header className="flex items-center justify-between px-4 py-4 border-b border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800">
+      <header className="relative z-10 flex items-center justify-between px-4 py-4 border-b border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800">
         <div className="flex items-center gap-2">
           <img src="https://res.cloudinary.com/dgsorkijt/image/upload/v1783464326/eduspark_namczy.png" alt="" className="w-6 h-6" />
           <h1 className="text-lg font-semibold text-slate-900 dark:text-white font-nunito">EduSpark</h1>
@@ -127,7 +127,7 @@ export function App() {
         </div>
       </header>
 
-      <nav className="flex bg-slate-100 dark:bg-slate-800 p-1 mx-4 mt-3 rounded-2xl gap-0.5 overflow-x-auto no-scrollbar">
+      <nav className="relative z-10 flex bg-slate-100 dark:bg-slate-800 p-1 mx-4 mt-3 rounded-2xl gap-0.5 overflow-x-auto no-scrollbar">
         {(['dashboard', 'chat', 'notes', 'flashcards', 'quiz', 'summary', 'focus'] as const).map((tab) => (
           <button
             key={tab}

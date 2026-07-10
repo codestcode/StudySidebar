@@ -293,7 +293,10 @@ export const api = {
       body: formData,
     });
 
-    if (!response.ok) throw new Error('Failed to extract PDF text');
+    if (!response.ok) {
+      const body = await response.json().catch(() => null);
+      throw new Error(body?.error || 'Failed to extract PDF text');
+    }
     return response.json();
   },
 

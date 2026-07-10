@@ -1,8 +1,5 @@
 import { Router, type Request, type Response } from 'express';
 import multer from 'multer';
-import { createRequire } from 'module';
-const require = createRequire(import.meta.url);
-const pdfParse = require('pdf-parse');
 
 const router: Router = Router();
 const upload = multer({ storage: multer.memoryStorage() });
@@ -17,15 +14,23 @@ router.post('/extract', upload.single('file'), async (req: Request, res: Respons
       return res.status(400).json({ error: 'Uploaded file must be a PDF' });
     }
 
-    const pdfData = await pdfParse(req.file.buffer);
-    
-    // Clean up excessive whitespace
-    const text = pdfData.text.replace(/\s+/g, ' ').trim();
+    const { PDFParse } = await import('pdf-parse');
+    const uint8 = new Uint8Array(req.file.buffer);
+    const parser = new PDFParse(uint8);
+    await parser.load();
 
-    res.json({ text, pages: pdfData.numpages });
-  } catch (error) {
-    console.error('PDF extraction error:', error);
-    res.status(500).json({ error: 'Failed to extract text from PDF' });
+    const result = await parser.getText();
+    const info = await parser.getInfo();
+    const text = (result.text || '').replace(/\s+/g, ' ').trim();
+
+    if (!text) {
+      return res.status(422).json({ error: 'PDF contains no extractable text. It may be a scanned/image-based PDF.' });
+    }
+
+    res.json({ text, pages: info.total || 1 });
+  } catch (error: any) {
+    console.error('PDF extraction error:', error?.message || error);
+    res.status(500).json({ error: error?.message || 'Failed to extract text from PDF' });
   }
 });
 

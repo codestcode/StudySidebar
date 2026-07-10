@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import mermaid from 'mermaid';
-import { Loader2, ZoomIn, ZoomOut, RotateCcw, Maximize2 } from 'lucide-react';
+import { Loader2, ZoomIn, ZoomOut, RotateCcw, Maximize2, Download } from 'lucide-react';
 
 mermaid.initialize({
   startOnLoad: false,
@@ -29,22 +29,30 @@ export function MindMapViewer({ syntax }: MindMapViewerProps) {
 
   const clamp = (val: number, min: number, max: number) => Math.min(Math.max(val, min), max);
 
-  const handleWheel = useCallback((e: React.WheelEvent) => {
-    e.preventDefault();
-    const rect = outerRef.current?.getBoundingClientRect();
-    if (!rect) return;
-    const mouseX = e.clientX - rect.left;
-    const mouseY = e.clientY - rect.top;
-    const delta = e.deltaY > 0 ? -0.08 : 0.08;
-    setScale(prev => {
-      const newScale = clamp(prev + delta * prev, MIN_SCALE, MAX_SCALE);
-      const ratio = newScale / prev;
-      setPosition(pos => ({
-        x: mouseX - (mouseX - pos.x) * ratio,
-        y: mouseY - (mouseY - pos.y) * ratio,
-      }));
-      return newScale;
-    });
+  // Non-passive wheel handler attached via useEffect
+  useEffect(() => {
+    const el = outerRef.current;
+    if (!el) return;
+
+    const onWheel = (e: WheelEvent) => {
+      e.preventDefault();
+      const rect = el.getBoundingClientRect();
+      const mouseX = e.clientX - rect.left;
+      const mouseY = e.clientY - rect.top;
+      const delta = e.deltaY > 0 ? -0.08 : 0.08;
+      setScale(prev => {
+        const newScale = clamp(prev + delta * prev, MIN_SCALE, MAX_SCALE);
+        const ratio = newScale / prev;
+        setPosition(pos => ({
+          x: mouseX - (mouseX - pos.x) * ratio,
+          y: mouseY - (mouseY - pos.y) * ratio,
+        }));
+        return newScale;
+      });
+    };
+
+    el.addEventListener('wheel', onWheel, { passive: false });
+    return () => el.removeEventListener('wheel', onWheel);
   }, []);
 
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
@@ -121,6 +129,60 @@ export function MindMapViewer({ syntax }: MindMapViewerProps) {
     setPosition({ x: 0, y: 0 });
   };
 
+  const exportPng = useCallback(() => {
+    const svg = svgWrapperRef.current?.querySelector('svg');
+    if (!svg) return;
+
+    const cloned = svg.cloneNode(true) as SVGSVGElement;
+
+    // Strip external URLs (images, textures) that taint the canvas
+    cloned.querySelectorAll('image').forEach(img => img.remove());
+    cloned.querySelectorAll('[style]').forEach(el => {
+      const style = el.getAttribute('style') || '';
+      el.setAttribute('style', style.replace(/url\([^)]*\)/g, 'none'));
+    });
+    cloned.querySelectorAll('pattern').forEach(p => p.remove());
+    cloned.querySelectorAll('filter').forEach(f => {
+      f.innerHTML = '';
+    });
+
+    const bbox = svg.getBBox();
+    const padding = 32;
+    const width = bbox.width + padding * 2;
+    const height = bbox.height + padding * 2;
+    cloned.setAttribute('width', String(width * 2));
+    cloned.setAttribute('height', String(height * 2));
+    cloned.setAttribute('viewBox', `0 0 ${width} ${height}`);
+    cloned.style.background = '#ffffff';
+
+    const serializer = new XMLSerializer();
+    const svgStr = serializer.serializeToString(cloned);
+    const svgBase64 = btoa(unescape(encodeURIComponent(svgStr)));
+    const dataUrl = `data:image/svg+xml;base64,${svgBase64}`;
+
+    const img = new Image();
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      canvas.width = width * 2;
+      canvas.height = height * 2;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) return;
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+
+      canvas.toBlob((blob) => {
+        if (!blob) return;
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = 'mindmap.png';
+        a.click();
+        setTimeout(() => URL.revokeObjectURL(a.href), 100);
+      }, 'image/png');
+    };
+    img.src = dataUrl;
+  }, []);
+
   useEffect(() => {
     let isMounted = true;
 
@@ -178,7 +240,6 @@ export function MindMapViewer({ syntax }: MindMapViewerProps) {
       ref={outerRef}
       className="relative w-full h-full min-h-[350px] bg-slate-50 dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-700 overflow-hidden select-none"
       style={{ cursor: isDragging ? 'grabbing' : 'grab', touchAction: 'none' }}
-      onWheel={handleWheel}
       onMouseDown={handleMouseDown}
       onMouseMove={handleMouseMove}
       onMouseUp={handleMouseUp}
@@ -209,6 +270,10 @@ export function MindMapViewer({ syntax }: MindMapViewerProps) {
         </button>
         <button onClick={resetView} className="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 transition-colors" title="Reset view">
           <RotateCcw className="w-3.5 h-3.5" />
+        </button>
+        <div className="w-px h-4 bg-slate-200 dark:bg-slate-600" />
+        <button onClick={exportPng} className="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 transition-colors" title="Export as PNG">
+          <Download className="w-3.5 h-3.5" />
         </button>
       </div>
 
