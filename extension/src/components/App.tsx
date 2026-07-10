@@ -8,6 +8,7 @@ import { Settings } from './Settings';
 import { Notes } from './Notes';
 import { Dashboard } from './Dashboard';
 import { Flashcards } from './Flashcards';
+import { Focus } from './Focus';
 import { storage } from '../utils/storage';
 import '../styles.css';
 

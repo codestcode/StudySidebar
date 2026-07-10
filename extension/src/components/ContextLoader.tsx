@@ -115,12 +115,28 @@ export function ContextLoader({ onContextLoaded, onError, compact = false }: Con
       ) : null}
 
       {context ? (
+        compact ? (
+          <div className="flex items-center gap-2 w-full">
+            <Check className="w-3.5 h-3.5 text-emerald-500 flex-shrink-0" />
+            <span className="text-[11px] text-emerald-600 dark:text-emerald-400 font-nunito flex-1 truncate">
+              {context.title}
+            </span>
+            <button
+              type="button"
+              onClick={loadContext}
+              className="flex items-center gap-1 px-2 py-1 rounded-lg bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-[11px] text-slate-600 dark:text-slate-300 font-medium transition-colors flex-shrink-0"
+              title="Reload from current tab"
+            >
+              <RotateCcw className="w-3 h-3" />
+            </button>
+          </div>
+        ) : (
         <>
           <div className="w-8 h-8 rounded-full bg-emerald-500 flex items-center justify-center flex-shrink-0">
             {context.source === 'pdf' ? (
               <FileText className="w-4 h-4 text-white" />
             ) : context.source === 'youtube' ? (
-              <Globe className="w-4 h-4 text-white" /> // You can replace with YouTube icon if available
+              <Globe className="w-4 h-4 text-white" />
             ) : (
               <Check className="w-4 h-4 text-white" />
             )}
@@ -143,6 +159,7 @@ export function ContextLoader({ onContextLoaded, onError, compact = false }: Con
             Refresh
           </button>
         </>
+        )
       ) : (
         <div className="flex items-center gap-3 w-full">
           <AlertTriangle className="w-5 h-5 text-amber-500" />

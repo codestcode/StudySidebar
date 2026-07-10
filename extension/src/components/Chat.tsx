@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { api } from '../utils/api';
@@ -211,9 +211,9 @@ export function Chat({ initialContext }: ChatProps) {
     }
   };
 
-  const handleContextLoaded = (ctx: PageContext) => {
+  const handleContextLoaded = useCallback((ctx: PageContext) => {
     setContext(`Page: ${ctx.title}\nURL: ${ctx.url}\n\n--- Content ---\n\n${ctx.content}`);
-  };
+  }, []);
 
   const refreshForNewPage = async () => {
     setShowPageChangePopup(false);
@@ -255,7 +255,7 @@ export function Chat({ initialContext }: ChatProps) {
 
       <ContextLoader 
         onContextLoaded={handleContextLoaded} 
-        onError={(err) => setError(err)} 
+        onError={setError} 
         compact={true} 
       />
 
@@ -361,16 +361,16 @@ export function Chat({ initialContext }: ChatProps) {
       </form>
 
       {showPageChangePopup && pendingPage && (
-        <div className="absolute inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4 animate-fade-slide-up rounded-3xl">
-          <div className="glass3d rounded-3xl p-6 max-w-sm text-center w-full">
+        <div className="absolute inset-0 z-50 bg-black/40 dark:bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 animate-fade-slide-up rounded-3xl">
+          <div className="bg-white/90 dark:bg-slate-800/90 backdrop-blur-xl border border-slate-200 dark:border-slate-700/50 rounded-3xl p-6 max-w-sm text-center w-full shadow-xl shadow-slate-200/50 dark:shadow-black/20">
             <h3 className="text-base font-semibold text-slate-900 dark:text-white font-nunito mb-2">New Page Detected</h3>
             <p className="text-xs text-slate-500 dark:text-slate-400 font-nunito mb-1 truncate">{pendingPage.title}</p>
-            <p className="text-xs text-slate-400 font-nunito mb-5 truncate">{pendingPage.url}</p>
+            <p className="text-xs text-slate-400 dark:text-slate-500 font-nunito mb-5 truncate">{pendingPage.url}</p>
             <p className="text-sm text-slate-600 dark:text-slate-300 font-nunito mb-5">Would you like to refresh the AI context with this page's content?</p>
             <div className="flex gap-3">
               <button
                 onClick={dismissPageChange}
-                className="flex-1 py-2.5 rounded-xl border border-slate-200 dark:border-slate-600 text-sm text-slate-600 dark:text-slate-300 font-medium hover:bg-slate-50 dark:hover:bg-slate-700 transition-all font-nunito"
+                className="flex-1 py-2.5 rounded-xl border border-slate-200 dark:border-slate-600 text-sm text-slate-600 dark:text-slate-300 font-medium hover:bg-slate-100 dark:hover:bg-slate-700 transition-all font-nunito"
               >
                 Keep Current
               </button>
