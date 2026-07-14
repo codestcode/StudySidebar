@@ -52,7 +52,7 @@ export const api = {
     return data;
   },
 
-  async *chatStream(message: string, context?: string) {
+  async *chatStream(message: string, context?: string, history?: Array<{ role: 'user' | 'assistant'; content: string }>) {
     const token = await storage.getToken();
     if (!token) throw new Error('Not authenticated');
 
@@ -62,7 +62,7 @@ export const api = {
         'Content-Type': 'application/json',
         Authorization: `Bearer ${token}`,
       },
-      body: JSON.stringify({ message, context }),
+      body: JSON.stringify({ message, context, history }),
     });
 
     if (!response.ok) throw new Error('Chat failed');

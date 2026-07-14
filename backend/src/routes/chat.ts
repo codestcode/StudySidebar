@@ -10,12 +10,13 @@ interface ChatRequest extends Request {
   body: {
     message?: string;
     context?: string;
+    history?: Array<{ role: 'user' | 'assistant'; content: string }>;
   };
 }
 
 router.post('/message', async (req: ChatRequest, res: Response) => {
   try {
-    const { message, context } = req.body;
+    const { message, context, history } = req.body;
     const userId = req.userId;
 
     if (!userId) {
@@ -35,7 +36,8 @@ router.post('/message', async (req: ChatRequest, res: Response) => {
       ? `You are a helpful study assistant. Use this context to answer questions:\n\n${context}`
       : 'You are a helpful study assistant for computer science students.';
 
-    const messages = [
+    const messages: Array<{ role: 'user' | 'assistant'; content: string }> = [
+      ...(history || []),
       { role: 'user' as const, content: message },
     ];
 
