@@ -1,0 +1,15 @@
+Stream error: Error: OpenRouter API error: Payment Required
+    at streamChatResponse (D:\habeba\habeba\new work of DOM\studysidebar\backend\src\utils\openrouter.ts:46:11)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async summarizeContent (D:\habeba\habeba\new work of DOM\studysidebar\backend\src\utils\openrouter.ts:420:20)
+    at async <anonymous> (D:\habeba\habeba\new work of DOM\studysidebar\backend\src\routes\summary.ts:39:21)
+Stream error: Error: OpenRouter API error: Payment Required
+    at streamChatResponse (D:\habeba\habeba\new work of DOM\studysidebar\backend\src\utils\openrouter.ts:46:11)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async summarizeContent (D:\habeba\habeba\new work of DOM\studysidebar\backend\src\utils\openrouter.ts:420:20)
+    at async <anonymous> (D:\habeba\habeba\new work of DOM\studysidebar\backend\src\routes\summary.ts:39:21)
+Stream error: Error: OpenRouter API error: Payment Required
+    at streamChatResponse (D:\habeba\habeba\new work of DOM\studysidebar\backend\src\utils\openrouter.ts:46:11)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async summarizeContent (D:\habeba\habeba\new work of DOM\studysidebar\backend\src\utils\openrouter.ts:420:20)
+    at async <anonymous> (D:\habeba\habeba\new work of DOM\studysidebar\backend\src\routes\summary.ts:39:21)

@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { api } from '../utils/api';
@@ -28,13 +28,13 @@ export function Summary() {
     summaryEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [summary]);
 
-  const handleContextLoaded = (ctx: PageContext) => {
+  const handleContextLoaded = useCallback((ctx: PageContext) => {
     setContent(ctx.content);
     setPageTitle(ctx.title);
     setSourceUrl(ctx.url);
     setPageRead(true);
     setError('');
-  };
+  }, []);
 
   const handleGenerate = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -121,7 +121,7 @@ export function Summary() {
 
           <ContextLoader 
             onContextLoaded={handleContextLoaded} 
-            onError={(err) => setError(err)} 
+            onError={setError} 
           />
 
           <form onSubmit={handleGenerate} className="space-y-5">

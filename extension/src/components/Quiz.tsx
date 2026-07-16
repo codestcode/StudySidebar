@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { api } from '../utils/api';
 import type { GenMode, Difficulty, QuizContent, QuizResult } from './QuizTypes';
 import { QuizGenerate } from './QuizGenerate';
@@ -24,11 +24,11 @@ export function Quiz() {
   const [result, setResult] = useState<QuizResult | null>(null);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
 
-  const handleContextLoaded = (ctx: any) => {
+  const handleContextLoaded = useCallback((ctx: any) => {
     setContent(ctx.content);
     setPageTitle(ctx.title);
     setError('');
-  };
+  }, []);
 
   const handleGenerate = async (e: React.FormEvent) => {
     e.preventDefault();

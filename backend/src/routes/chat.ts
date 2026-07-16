@@ -32,14 +32,18 @@ router.post('/message', async (req: ChatRequest, res: Response) => {
     res.setHeader('Connection', 'keep-alive');
 
     let fullResponse = '';
-    const systemPrompt = context
-      ? `You are a helpful study assistant. Use this context to answer questions:\n\n${context}`
-      : 'You are a helpful study assistant for computer science students.';
+    const systemPrompt = 'You are a helpful study assistant. Answer questions based on the page content provided in the user message.';
+
+    const contextBlock = context
+      ? `\n\n--- Page Context ---\n${context}\n--- End Context ---\n`
+      : '';
 
     const messages: Array<{ role: 'user' | 'assistant'; content: string }> = [
       ...(history || []),
-      { role: 'user' as const, content: message },
+      { role: 'user' as const, content: `${contextBlock}User question: ${message}` },
     ];
+
+    console.log(`[Chat] Sending to AI: ${messages.length} messages, user msg length: ${messages[messages.length - 1].content.length}`);
 
     try {
       for await (const chunk of streamChatResponse(messages, systemPrompt)) {

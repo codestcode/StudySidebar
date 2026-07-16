@@ -6,16 +6,7 @@ interface ChatMessage {
   content: string;
 }
 
-const MASTER_SYSTEM_PROMPT = `You are an intelligent study assistant embedded in a browser extension for students and researchers. You help students understand, study, and learn from the content they are reading.
-
-When page context is provided, you MUST use it to answer questions. You know exactly which page the student is reading and what it contains. Refer to the page content naturally when answering.
-
-Rules you must always follow:
-- Use clean, precise language — no filler words
-- Preserve technical terms, names, and definitions exactly as they appear
-- Answer questions directly and thoroughly based on the page content when available
-- If the student asks about "this page" or "the content", use the provided context to answer
-- If you don't have enough context, say so honestly rather than guessing`;
+const MASTER_SYSTEM_PROMPT = `You are an intelligent study assistant for students. The user will send you page content along with their question. Use the provided page content to answer their questions accurately.`;
 
 export async function* streamChatResponse(
   messages: ChatMessage[],
@@ -29,7 +20,11 @@ export async function* streamChatResponse(
   if (systemPrompt) {
     systemMessages.push({ role: 'system', content: systemPrompt });
   }
-  const allMessages: ChatMessage[] = [...systemMessages, ...messages];
+  // Remove duplicate system messages - keep only unique ones
+  const uniqueSystemMessages = systemMessages.filter((msg, index, self) =>
+    index === self.findIndex(m => m.content === msg.content)
+  );
+  const allMessages: ChatMessage[] = [...uniqueSystemMessages, ...messages];
 
   const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
     method: 'POST',
@@ -101,7 +96,9 @@ export async function generateQuizFromContent(topic: string, difficulty: string,
   let userMessage: string;
 
   if (content) {
-    systemPrompt = `You are an expert quiz generator. Create a quiz in JSON format with exactly ${qCount} questions based on the provided content.
+    systemPrompt = `CRITICAL: You MUST respond with ONLY a raw JSON object. Your entire response must start with { and end with }. Do NOT use markdown formatting, do NOT use code blocks, do NOT add any text before or after the JSON.
+
+You are an expert quiz generator. Create a quiz in JSON format with exactly ${qCount} questions based on the provided content.
 Question types to include: ${qTypes}.
 - For "mcq": each question must have 4 options and one correct answer.
 - For "truefalse": each question must have options ["True", "False"] and one correct answer.
@@ -119,7 +116,9 @@ Return ONLY valid JSON in this exact format, no other text:
 }`;
     userMessage = `Generate a ${difficulty} quiz with ${qCount} questions (${qTypes}) based on the following content:\n\n${content}`;
   } else {
-    systemPrompt = `You are an expert quiz generator. Create a quiz in JSON format with exactly ${qCount} questions about the given topic.
+    systemPrompt = `CRITICAL: You MUST respond with ONLY a raw JSON object. Your entire response must start with { and end with }. Do NOT use markdown formatting, do NOT use code blocks, do NOT add any text before or after the JSON.
+
+You are an expert quiz generator. Create a quiz in JSON format with exactly ${qCount} questions about the given topic.
 Question types to include: ${qTypes}.
 - For "mcq": each question must have 4 options and one correct answer.
 - For "truefalse": each question must have options ["True", "False"] and one correct answer.
@@ -153,14 +152,18 @@ Return ONLY valid JSON in this exact format, no other text:
   let parsed: any;
   const trimmed = fullResponse.trim();
 
+  // Try to extract JSON from markdown code blocks first
+  const codeBlockMatch = trimmed.match(/```(?:json)?\s*\n?([\s\S]*?)\n?\s*```/);
+  const jsonCandidate = codeBlockMatch ? codeBlockMatch[1].trim() : trimmed;
+
   try {
-    parsed = JSON.parse(trimmed);
+    parsed = JSON.parse(jsonCandidate);
   } catch {
-    const firstBrace = trimmed.indexOf('{');
-    const lastBrace = trimmed.lastIndexOf('}');
+    const firstBrace = jsonCandidate.indexOf('{');
+    const lastBrace = jsonCandidate.lastIndexOf('}');
     if (firstBrace !== -1 && lastBrace > firstBrace) {
       try {
-        parsed = JSON.parse(trimmed.slice(firstBrace, lastBrace + 1));
+        parsed = JSON.parse(jsonCandidate.slice(firstBrace, lastBrace + 1));
       } catch {}
     }
   }
@@ -176,6 +179,47 @@ Return ONLY valid JSON in this exact format, no other text:
     }
     return parsed;
   }
+
+  // Fallback: parse markdown-formatted quiz (e.g. **Q:** / **Correct Answer:**)
+  const questions: any[] = [];
+  const lines = trimmed.split('\n').map(l => l.trim());
+  let currentQ = '';
+  let currentOptions: string[] = [];
+  let currentAnswer = '';
+
+  for (const line of lines) {
+    const stripped = line.replace(/\*+/g, '').trim();
+    if (!stripped || stripped === '---') {
+      if (currentQ && currentOptions.length > 0 && currentAnswer) {
+        questions.push({ question: currentQ, options: currentOptions, correctAnswer: currentAnswer });
+      }
+      if (!stripped) { currentQ = ''; currentOptions = []; currentAnswer = ''; }
+      continue;
+    }
+    const qMatch = stripped.match(/^(?:Q|Question)[:\s]+(.+)/i);
+    const aMatch = stripped.match(/^(?:Correct Answer|Answer)[:\s]+(.+)/i);
+    const optMatch = stripped.match(/^([A-D])[).:]\s*(.+)/i);
+
+    if (qMatch) {
+      if (currentQ && currentOptions.length > 0 && currentAnswer) {
+        questions.push({ question: currentQ, options: currentOptions, correctAnswer: currentAnswer });
+      }
+      currentQ = qMatch[1].trim();
+      currentOptions = [];
+      currentAnswer = '';
+    } else if (aMatch) {
+      currentAnswer = aMatch[1].trim();
+    } else if (optMatch) {
+      currentOptions.push(optMatch[2].trim());
+    }
+  }
+  if (currentQ && currentOptions.length > 0 && currentAnswer) {
+    questions.push({ question: currentQ, options: currentOptions, correctAnswer: currentAnswer });
+  }
+  if (questions.length > 0) {
+    return { questions };
+  }
+
   console.error('AI raw response (first 1000 chars):', fullResponse.slice(0, 1000));
   return { questions: [] };
 }
@@ -284,7 +328,9 @@ ${pageContent}`,
 
 const CORNELL_SYSTEM_PROMPT = `You are a study assistant that generates Cornell-style notes from webpage content.
 
-Return ONLY valid JSON in this exact format, no other text:
+IMPORTANT: You MUST return ONLY a raw JSON object. No markdown, no code blocks, no extra text. Start your response with { and end with }.
+
+Return ONLY valid JSON in this exact format:
 {
   "title": "A concise title for these notes based on the page",
   "rows": [
@@ -292,18 +338,15 @@ Return ONLY valid JSON in this exact format, no other text:
       "id": "unique-id-1",
       "cue": "Short keyword or question (e.g. 'What is X?')",
       "note": "Concise explanation answering the cue, 1-3 short lines",
-      "importance": "high" | "medium" | "low"
+      "importance": "high"
     }
   ],
-  "summary": "3-5 sentence recap of the whole page, written as if the student is reviewing right before a test"
+  "summary": "3-5 sentence recap of the whole page"
 }
 
 Rules:
-- Break the page into digestible chunks (roughly one idea per row — aim for 5-12 rows depending on page length)
-- Cue = a short keyword, term, or question that would trigger recall
-- Note = the actual explanation, kept tight (1-3 short lines)
-- Mark 2-3 rows as "high" importance (core concepts vs supporting detail)
-- Summary must NOT just repeat the rows — read like a final review paragraph
+- Break the page into digestible chunks (5-12 rows)
+- Mark 2-3 rows as "high" importance
 - Generate unique string IDs for each row`;
 
 export async function generateCornellNotes(content: string, pageTitle?: string, pageUrl?: string): Promise<any> {
@@ -329,17 +372,22 @@ ${content}`;
   }
 
   const trimmed = fullResponse.trim();
+  
+  // Try to extract JSON from markdown code blocks first
+  const codeBlockMatch = trimmed.match(/```(?:json)?\s*\n?([\s\S]*?)\n?\s*```/);
+  const jsonCandidate = codeBlockMatch ? codeBlockMatch[1].trim() : trimmed;
+  
   try {
-    const parsed = JSON.parse(trimmed);
+    const parsed = JSON.parse(jsonCandidate);
     if (parsed.rows && Array.isArray(parsed.rows)) {
       return parsed;
     }
   } catch {
-    const firstBrace = trimmed.indexOf('{');
-    const lastBrace = trimmed.lastIndexOf('}');
+    const firstBrace = jsonCandidate.indexOf('{');
+    const lastBrace = jsonCandidate.lastIndexOf('}');
     if (firstBrace !== -1 && lastBrace > firstBrace) {
       try {
-        const parsed = JSON.parse(trimmed.slice(firstBrace, lastBrace + 1));
+        const parsed = JSON.parse(jsonCandidate.slice(firstBrace, lastBrace + 1));
         if (parsed.rows && Array.isArray(parsed.rows)) {
           return parsed;
         }
@@ -378,22 +426,24 @@ export async function summarizeContent(content: string, length: string = 'medium
 
 const FLASHCARD_SYSTEM_PROMPT = `You are a study assistant that generates flashcards from webpage content or notes.
 
-Return ONLY valid JSON in this exact format, no other text:
+CRITICAL: You MUST respond with ONLY a raw JSON object. Your entire response must start with { and end with }. Do NOT use markdown formatting, do NOT use code blocks, do NOT add any text before or after the JSON. The very first character of your response must be { and the very last must be }.
+
+Return ONLY valid JSON in this exact format:
 {
   "flashcards": [
     {
-      "question": "A concise question testing a single concept (max 15 words)?",
-      "answer": "A clear, concise, and direct answer (max 30 words)."
+      "question": "A concise question testing a single concept (max 15 words)",
+      "answer": "A clear, concise answer (max 30 words)"
     }
   ]
 }
 
 Rules:
-- Questions must be clear, specific, and self-contained.
-- Answers should be punchy and easy to memorize for active recall.
-- Avoid multi-part answers or overly wordy explanations.
-- Focus on key definitions, core concepts, comparisons, and facts.
-- Generate a number of cards matching the requested count.`;
+- Questions must be clear, specific, and self-contained
+- Answers should be punchy and easy to memorize
+- Focus on key definitions, core concepts, comparisons, and facts
+- Generate a number of cards matching the requested count
+- NEVER use markdown or text formatting in your response`;
 
 export async function generateFlashcardsFromContent(
   content: string,
@@ -423,22 +473,73 @@ ${content}`;
   }
 
   const trimmed = fullResponse.trim();
+  
+  // Try to extract JSON from markdown code blocks first
+  const codeBlockMatch = trimmed.match(/```(?:json)?\s*\n?([\s\S]*?)\n?\s*```/);
+  const jsonCandidate = codeBlockMatch ? codeBlockMatch[1].trim() : trimmed;
+  
   try {
-    const parsed = JSON.parse(trimmed);
+    const parsed = JSON.parse(jsonCandidate);
     if (parsed.flashcards && Array.isArray(parsed.flashcards)) {
       return parsed;
     }
   } catch {
-    const firstBrace = trimmed.indexOf('{');
-    const lastBrace = trimmed.lastIndexOf('}');
+    const firstBrace = jsonCandidate.indexOf('{');
+    const lastBrace = jsonCandidate.lastIndexOf('}');
     if (firstBrace !== -1 && lastBrace > firstBrace) {
       try {
-        const parsed = JSON.parse(trimmed.slice(firstBrace, lastBrace + 1));
+        const parsed = JSON.parse(jsonCandidate.slice(firstBrace, lastBrace + 1));
         if (parsed.flashcards && Array.isArray(parsed.flashcards)) {
           return parsed;
         }
       } catch {}
     }
+  }
+
+  // Fallback: parse markdown-formatted flashcards
+  // Handles formats like:
+  //   **Q:** question? / **A:** answer
+  //   **Flashcard 1** \n **Q:** ... \n **A:** ...
+  //   **Front:** ... / **Back:** ...
+  const mdCards: any[] = [];
+  const lines = trimmed.split('\n').map(l => l.trim());
+  let currentQ = '';
+  let collectingAnswer = false;
+  let currentA = '';
+
+  for (const line of lines) {
+    const stripped = line.replace(/\*+/g, '').trim();
+    if (!stripped || stripped === '---') {
+      if (collectingAnswer && currentQ && currentA) {
+        mdCards.push({ question: currentQ, answer: currentA.trim() });
+        currentQ = '';
+        currentA = '';
+        collectingAnswer = false;
+      }
+      continue;
+    }
+    const qMatch = stripped.match(/^(?:Q|Question|Front|Front side)[:\s]+(.+)/i);
+    const aMatch = stripped.match(/^(?:A|Answer|Back|Back side)[:\s]+(.+)/i);
+    if (qMatch) {
+      if (collectingAnswer && currentQ && currentA) {
+        mdCards.push({ question: currentQ, answer: currentA.trim() });
+      }
+      currentQ = qMatch[1].trim();
+      currentA = '';
+      collectingAnswer = false;
+    } else if (aMatch && currentQ) {
+      currentA = aMatch[1].trim();
+      collectingAnswer = true;
+    } else if (collectingAnswer) {
+      currentA += ' ' + stripped;
+    }
+  }
+  if (collectingAnswer && currentQ && currentA) {
+    mdCards.push({ question: currentQ, answer: currentA.trim() });
+  }
+
+  if (mdCards.length > 0) {
+    return { flashcards: mdCards };
   }
 
   console.error('AI raw response for flashcards (first 1000 chars):', fullResponse.slice(0, 1000));

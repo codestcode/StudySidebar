@@ -26,7 +26,7 @@ import { ContextLoader } from './ContextLoader';
 
 export function QuizGenerate({
   genMode, onGenModeChange,
-  content, pageTitle, readingPage, pageRead,
+  content, pageTitle,
   topic, onTopicChange,
   numQuestions, onNumQuestionsChange,
   difficulty, onDifficultyChange,

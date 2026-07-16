@@ -20,14 +20,20 @@ export function ContextLoader({ onContextLoaded, onError, compact = false }: Con
     setLoading(true);
     onError('');
     try {
+      if (typeof chrome === 'undefined' || !chrome.tabs) {
+        throw new Error('Chrome extension APIs not available. Run this as a Chrome extension.');
+      }
       const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
       const tab = tabs[0];
       if (!tab) throw new Error('No active tab found');
       
+      console.log('[ContextLoader] Loading context for tab:', tab.id, tab.url);
       const newContext = await fetchPageContent(tab);
+      console.log('[ContextLoader] Context loaded:', newContext.content.length, 'chars from', newContext.source);
       setContext(newContext);
       onContextLoaded(newContext);
     } catch (err) {
+      console.error('[ContextLoader] Failed:', err);
       onError(err instanceof Error ? err.message : 'Failed to read page content');
     } finally {
       setLoading(false);

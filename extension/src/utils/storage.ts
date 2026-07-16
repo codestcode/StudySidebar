@@ -6,29 +6,57 @@ export interface StorageData {
   chatMessages?: { role: 'user' | 'assistant'; content: string }[];
 }
 
+function isChromeStorageAvailable(): boolean {
+  return typeof chrome !== 'undefined' && chrome.storage && chrome.storage.local != null;
+}
+
+function getMemoryStorage(): StorageData {
+  if (!(globalThis as any).__memoryStorage) {
+    (globalThis as any).__memoryStorage = {};
+  }
+  return (globalThis as any).__memoryStorage;
+}
+
 export const storage = {
   async get(keys: string[]): Promise<StorageData> {
-    return new Promise((resolve) => {
-      chrome.storage.local.get(keys, (result) => {
-        resolve(result as StorageData);
+    if (isChromeStorageAvailable()) {
+      return new Promise((resolve) => {
+        chrome.storage.local.get(keys, (result) => {
+          resolve(result as StorageData);
+        });
       });
-    });
+    }
+    const mem = getMemoryStorage();
+    const result: StorageData = {};
+    for (const key of keys) {
+      if (key in mem) {
+        (result as any)[key] = (mem as any)[key];
+      }
+    }
+    return result;
   },
 
   async set(data: StorageData): Promise<void> {
-    return new Promise((resolve) => {
-      chrome.storage.local.set(data, () => {
-        resolve();
+    if (isChromeStorageAvailable()) {
+      return new Promise((resolve) => {
+        chrome.storage.local.set(data, () => {
+          resolve();
+        });
       });
-    });
+    }
+    const mem = getMemoryStorage();
+    Object.assign(mem, data);
   },
 
   async clear(): Promise<void> {
-    return new Promise((resolve) => {
-      chrome.storage.local.clear(() => {
-        resolve();
+    if (isChromeStorageAvailable()) {
+      return new Promise((resolve) => {
+        chrome.storage.local.clear(() => {
+          resolve();
+        });
       });
-    });
+    }
+    (globalThis as any).__memoryStorage = {};
   },
 
   async getToken(): Promise<string | null> {

@@ -1,12 +1,21 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
-import mermaid from 'mermaid';
 import { Loader2, ZoomIn, ZoomOut, RotateCcw, Maximize2, Download } from 'lucide-react';
 
-mermaid.initialize({
-  startOnLoad: false,
-  theme: 'default',
-  securityLevel: 'loose',
-});
+let mermaidReady = false;
+let mermaidPromise: Promise<any> | null = null;
+
+async function getMermaid() {
+  if (mermaidReady) return (await import('mermaid')).default;
+  if (!mermaidPromise) {
+    mermaidPromise = import('mermaid').then(async (m) => {
+      const mod = m.default;
+      mod.initialize({ startOnLoad: false, theme: 'default', securityLevel: 'loose' });
+      mermaidReady = true;
+      return mod;
+    });
+  }
+  return mermaidPromise;
+}
 
 interface MindMapViewerProps {
   syntax: string;
@@ -197,6 +206,7 @@ export function MindMapViewer({ syntax }: MindMapViewerProps) {
         svgWrapperRef.current.innerHTML = '';
 
         const id = `mermaid-${Date.now()}`;
+        const mermaid = await getMermaid();
         const { svg } = await mermaid.render(id, syntax);
 
         if (isMounted) {

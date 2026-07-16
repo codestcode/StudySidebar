@@ -3,7 +3,7 @@
   "name": "EduSpark",
   "version": "1.0.0",
   "description": "AI-powered study assistant for CS students",
-  "permissions": ["activeTab", "scripting", "storage", "declarativeNetRequest", "alarms", "sidePanel"],
+  "permissions": ["activeTab", "tabs", "scripting", "storage", "declarativeNetRequest", "alarms", "sidePanel"],
   "host_permissions": ["<all_urls>"],
   "action": {
 

@@ -191,6 +191,7 @@ export function Chat({ initialContext }: ChatProps) {
     try {
       let assistantMessage = '';
       const chatHistory = messages.map((m) => ({ role: m.role, content: m.content }));
+      console.log('[Chat] Sending message. Context length:', context.length, 'chars. Context preview:', context.substring(0, 200));
       for await (const chunk of api.chatStream(userMessage, context, chatHistory)) {
         assistantMessage += chunk;
         setMessages((prev) => {
