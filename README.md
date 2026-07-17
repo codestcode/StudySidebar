@@ -1,6 +1,6 @@
 <img alt="Hirfa Logo" src="./Studysidebardark.png" height="700" />
 
-# StudySidebar
+# EduSpark
 
 AI-powered Chrome extension that turns your browser sidebar into a full study assistant , chat, quiz, and summarize any web content.
 
@@ -203,8 +203,6 @@ Base URL: `http://localhost:3001/api`
 ---
 
 ## License
-
-MIT © 2026 StudySidebar 
 ---
 
 *From passive reader to active master.*
